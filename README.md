@@ -1,4 +1,4 @@
-# DRAFT - Multi Farmer
+# DRAFT - farMFA
 
 ## Abstract
 
@@ -13,28 +13,28 @@ Multi Factor Authentication is usually implemented by using the TOTP standard fr
 The generated One-Time Password, as the name suggests, may only be used once
 (or more precisely, within a timeframe of around 30 seconds to 90 seconds, depending on the server implementation).
 
-Multi Farmer comes into play in enterprise environments where access to certain accounts should be restricted to very special occasions
+farMFA comes into play in enterprise environments where access to certain accounts should be restricted to very special occasions
 (for example, access to the root user of an AWS master account).  
 In this context, we can secure the access so that, after the credentials to the account are retrieved,
 the second level of authorisation must come from multiple individuals.  
 First of all, we apply __Shamir's Secret Sharing__ to the original TOTP secret key, so that at least 3 of 5 holders are needed to reconstruct it.
-Additionally, the TOTP secret key is only ever reconstructed in Multi Farmer's server memory, so that no single player ever has to risk losing it.
-After having reconstructed the secret, Multi Farmer will then generate one or more OTPs for the user, until the session expires.
+Additionally, the TOTP secret key is only ever reconstructed in farMFA's server memory, so that no single player ever has to risk losing it.
+After having reconstructed the secret, farMFA will then generate one or more OTPs for the user, until the session expires.
 
 ## Getting started
 
-Multi Farmer is a client-server application.
+farMFA is a client-server application.
 Some operations are stateless (the creation of the shares), while managing authentication sessions relies on the server memory.
 Nothing is ever persisted on disk for higher security.
 
 ```sh
-$ multifarmer serve
+$ farmfa serve
 ```
 
 ### Bootstrap
 
 First we need the TOTP secret key, this is only used once to generate the shares.  
-This action is stateless so multifarmer can be shut afterwards.
+This action is stateless so farMFA can be shut afterwards.
 
 ```sh
 curl -s localhost:8081/shares -d secret_key=HXDMVJECJJWSRB3HWIZR4IFUGFTMXBOZ -d shares=5 -d threshold=3 | jq

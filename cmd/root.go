@@ -1,6 +1,8 @@
 package cmd
 
-import "github.com/spf13/cobra"
+import (
+	"github.com/spf13/cobra"
+)
 
 var rootCmd = &cobra.Command{
 	Use:   "multifarmer",
@@ -8,7 +10,12 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(serverCmd)
+	rootCmd.AddCommand(
+		serverCmd,
+		dealerCmd,
+		playerCmd,
+		sharesCmd,
+	)
 }
 
 // Execute is used by main as entrypoint

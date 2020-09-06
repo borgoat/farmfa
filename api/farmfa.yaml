@@ -1,0 +1,306 @@
+openapi: "3.0.0"
+info:
+  version: 0.1.0
+  title: farMFA
+  description: An API to manage TOTP with shared secrets
+  contact:
+    name: Giorgio Azzinnaro
+    email: giorgio@azzinna.ro
+    url: https://giorgio.azzinna.ro
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+servers:
+  - url: https://farmfa.example.com/v1alpha1
+  - url: /
+paths:
+  /shares:
+    post:
+      tags:
+        - shares
+      summary: Split a TOTP secret key
+      operationId: createShares
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TOTPSecret'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TOTPShares'
+        default:
+          $ref: '#/components/responses/DefaultError'
+
+  /sessions:
+    post:
+      tags:
+        - session
+      summary: Start a new authentication session
+      operationId: createSession
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewSession'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivateSession'
+
+  /sessions/{id}:
+    get:
+      operationId: getSession
+      tags:
+        - session
+      parameters:
+        - name: id
+          in: path
+          description: ID of session to retrieve
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+
+  /sessions/{id}/shares:
+    post:
+      description: Join a new share to an existing session
+      operationId: postShare
+      tags:
+        - session
+      parameters:
+        - name: id
+          in: path
+          description: ID of session for which to add the share
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DecryptedShare'
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Bad request
+
+  /sessions/{id}/totp:
+    post:
+      description: Close the session and generate the TOTP
+      operationId: generateTotp
+      tags:
+        - session
+      parameters:
+        - name: id
+          in: path
+          description: ID of session for which to generate the TOTP
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionCredentials'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TOTPCode'
+
+components:
+  schemas:
+    TOTPSecret:
+      type: object
+      properties:
+        totp_secret_key:
+          type: string
+          description: The secret key to generate the TOTP, either as a path or just the Base32 secret
+        encryption_keys:
+          type: array
+          description: The keys to encrypt the shares, its length must be equal to `shares`
+          example:
+            - kind: remote
+              from: pgp
+              search: 1B85DB43E82375DCBEB595C810159FC43E7F4AA1
+            - kind: remote
+              from: keybase.io
+              search: giorgioazzinnaro
+            - kind: local
+              format: age
+              key: age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p
+              recipient: giorgio@azzinna.ro
+          items:
+            type: object
+            properties:
+              search:
+                type: string
+                description: Address to retrieve the public key
+              from:
+                type: string
+                enum:
+                  - pgp
+                  - keybase.io
+                  - keys.pub
+        shares:
+          type: integer
+          minimum: 2
+          example: 5
+          default: 5
+          description: The number of shares to create
+        threshold:
+          type: integer
+          minimum: 2
+          example: 3
+          default: 3
+          description: The minimum number of shares required to generate the TOTP
+      required:
+        - totp_secret_key
+        - shares
+        - threshold
+
+    UserShare:
+      type: object
+      properties:
+        user:
+          type: string
+          description: The user this share belongs to
+        share:
+          type: string
+          description: The possibly encrypted share for this user
+      required:
+        - share
+
+    TOTPShares:
+      type: object
+      properties:
+        shares:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserShare'
+      required:
+        - shares
+
+    NewSession:
+      type: object
+      properties:
+        first_share:
+          type: string
+          description: A first share owned by the dealer
+        ttl:
+          type: integer
+          minimum: 60
+          maximum: 86400
+          default: 60
+          description: Seconds until the TOTP generation endpoint expires, starting from the first token generated.
+      required:
+        - first_share
+
+    PrivateSession:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/Session'
+        - $ref: '#/components/schemas/SessionCredentials'
+
+    SessionCredentials:
+      type: object
+      properties:
+        private:
+          type: string
+          description: The password to retrieve a TOTP from a session
+
+    Session:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The public identifier of a session
+        closes_at:
+          type: string
+          format: date-time
+          description: When the sessions will close down and no longer accept shares
+        created_at:
+          type: string
+          format: date-time
+          description: The time when the session started
+        ttl:
+          type: integer
+          minimum: 60
+          maximum: 86400
+          description: Seconds until the TOTP generation endpoint expires, starting from the first token generated.
+        complete:
+          type: boolean
+          description: True when enough shares have been provided
+        closed:
+          type: boolean
+          description: True when the session either expired or the token was already retrieved by the dealer
+        shares:
+          type: integer
+          minimum: 2
+          description: The total number of shares
+        threshold:
+          type: integer
+          minimum: 2
+          description: The minimum number of shares required
+        share_group:
+          type: string
+          description: The prefix to identify shares from different secrets
+
+    DecryptedShare:
+      type: object
+      properties:
+        share:
+          type: string
+          description: The share from the current user
+
+    TOTPCode:
+      type: object
+      properties:
+        totp:
+          type: string
+          pattern: '^\d{6}$'
+          description: The current TOTP
+        totp_expires_at:
+          type: string
+          format: date-time
+          description: The time when the current TOTP will expire
+        endpoint_expires_at:
+          type: string
+          format: date-time
+          description: The time when this endpoint will expire and cannot be called again
+
+# All errors
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+  responses:
+    DefaultError:
+      description: unexpected error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

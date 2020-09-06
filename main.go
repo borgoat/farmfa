@@ -1,6 +1,6 @@
 package main
 
-import "github.com/giorgioazzinnaro/multi-farmer-authentication/cmd"
+import "github.com/giorgioazzinnaro/farmfa/cmd"
 
 func main() {
 	err := cmd.Execute()
