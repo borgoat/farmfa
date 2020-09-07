@@ -6,27 +6,26 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var sharesSplitCmd = &cobra.Command{
-	Use:   "split",
-	Short: "Split a new TOTP",
+func sharesSplitCmd(client *api.Client) *cobra.Command {
 
-	RunE: runSharesSplit,
-}
+	run := func(cmd *cobra.Command, args []string) error {
+		rawResp, _ := client.CreateShares(cmd.Context(), api.CreateSharesJSONRequestBody{
+			EncryptionKeys: nil,
+			Shares:         5,
+			Threshold:      3,
+			TotpSecretKey:  "HXDMVJECJJWSRB3HWIZR4IFUGFTMXBOZ",
+		})
 
-func runSharesSplit(cmd *cobra.Command, args []string) error {
+		resp, _ := api.ParseCreateSharesResponse(rawResp)
 
-	c, _ := api.NewClient("http://localhost:8081")
+		fmt.Print(resp.JSON200.Shares)
 
-	rawResp, _ := c.CreateShares(cmd.Context(), api.CreateSharesJSONRequestBody{
-		EncryptionKeys: nil,
-		Shares:         5,
-		Threshold:      3,
-		TotpSecretKey:  "HXDMVJECJJWSRB3HWIZR4IFUGFTMXBOZ",
-	})
+		return nil
+	}
 
-	resp, _ := api.ParseCreateSharesResponse(rawResp)
-
-	fmt.Print(resp.JSON200.Shares)
-
-	return nil
+	return &cobra.Command{
+		Use:   "split",
+		Short: "Split a new TOTP",
+		RunE:  run,
+	}
 }

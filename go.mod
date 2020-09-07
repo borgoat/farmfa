@@ -10,4 +10,5 @@ require (
 	github.com/labstack/echo/v4 v4.1.16
 	github.com/pquerna/otp v1.2.0
 	github.com/spf13/cobra v0.0.7
+	github.com/spf13/viper v1.4.0
 )

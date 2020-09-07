@@ -10,30 +10,38 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var serverCmd = &cobra.Command{
-	Use:     "server",
-	Aliases: []string{"serve", "s"},
-	Short:   "Start the server",
-
-	RunE: runServer,
+type ServerConfig struct {
+	BindAddress string `json:"bind_address"`
+	LogLevel    string `json:"log_level"`
 }
 
-func runServer(cmd *cobra.Command, args []string) error {
-	e := echo.New()
+func serverCmd(cfg *ServerConfig) *cobra.Command {
 
-	apiObj, err := api.GetSwagger()
-	if err != nil {
-		return fmt.Errorf("error loading OpenAPI spec: %w" , err)
+	run := func(cmd *cobra.Command, args []string) error {
+		e := echo.New()
+
+		apiObj, err := api.GetSwagger()
+		if err != nil {
+			return fmt.Errorf("error loading OpenAPI spec: %w", err)
+		}
+		e.Use(middleware.OapiRequestValidator(apiObj))
+
+		sessionManager := sessions.NewInMemory()
+
+		s := server.New(sessionManager)
+
+		api.RegisterHandlers(e, s)
+
+		e.Logger.Fatal(e.Start(cfg.BindAddress))
+
+		return nil
 	}
-	e.Use(middleware.OapiRequestValidator(apiObj))
 
-	sessionManager := sessions.NewInMemory()
+	return &cobra.Command{
+		Use:     "server",
+		Aliases: []string{"serve", "s"},
+		Short:   "Start the server",
 
-	s := server.New(sessionManager)
-
-	api.RegisterHandlers(e, s)
-
-	e.Logger.Fatal(e.Start(":8081"))
-
-	return nil
+		RunE: run,
+	}
 }
