@@ -264,6 +264,8 @@ components:
 
     DecryptedShare:
       type: object
+      required:
+        - share
       properties:
         share:
           type: string
@@ -293,8 +295,9 @@ components:
         - message
       properties:
         code:
-          type: integer
-          format: int32
+          type: string
+          enum:
+            - InvalidTOTPSecret
         message:
           type: string
   responses:
