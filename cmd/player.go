@@ -12,9 +12,5 @@ func playerCmd(client *api.Client) *cobra.Command {
 		Short:   "Players are those holding shares and helping a dealer retrieve a secret",
 	}
 
-	c.AddCommand(
-		playerStartCmd(client),
-	)
-
 	return c
 }

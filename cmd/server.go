@@ -8,14 +8,10 @@ import (
 	"github.com/giorgioazzinnaro/farmfa/sessions"
 	"github.com/labstack/echo/v4"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
-type ServerConfig struct {
-	BindAddress string `json:"bind_address"`
-	LogLevel    string `json:"log_level"`
-}
-
-func serverCmd(cfg *ServerConfig) *cobra.Command {
+func serverCmd(v *viper.Viper) *cobra.Command {
 
 	run := func(cmd *cobra.Command, args []string) error {
 		e := echo.New()
@@ -32,16 +28,23 @@ func serverCmd(cfg *ServerConfig) *cobra.Command {
 
 		api.RegisterHandlers(e, s)
 
-		e.Logger.Fatal(e.Start(cfg.BindAddress))
+		e.Logger.Fatal(e.Start(v.GetString("bind-address")))
 
 		return nil
 	}
 
-	return &cobra.Command{
+	c := &cobra.Command{
 		Use:     "server",
 		Aliases: []string{"serve", "s"},
 		Short:   "Start the server",
 
 		RunE: run,
 	}
+
+	c.Flags().String("bind-address", "localhost:8080", "The address to bind the server")
+	_ = v.BindPFlags(c.Flags())
+	_ = v.BindEnv("bind-address", "FARMFA_BIND_ADDRESS")
+	_ = v.ReadInConfig()
+
+	return c
 }

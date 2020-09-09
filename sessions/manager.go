@@ -11,4 +11,5 @@ type SessionManager interface {
 	Start(firstShare *shares.Token) (*api.PrivateSession, error)
 	AddShare(id SessionIdentifier, share *shares.Token) error
 	Status(id SessionIdentifier) (*api.Session, error)
+	GenerateTOTP(id SessionIdentifier) (string, error)
 }

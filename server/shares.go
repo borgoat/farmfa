@@ -27,18 +27,19 @@ func (s Server) CreateShares(ctx echo.Context) error {
 		return fmt.Errorf("error while splitting secret into shares: %w", err)
 	}
 
-	stringTokens := make([]string, len(tokens))
+	resp.Shares = make([]api.UserShare, len(tokens))
 
 	for i, token := range tokens {
-		stringTokens[i], err = token.String()
+		s, err := token.String()
 		if err != nil {
 			// TODO Public HTTP error, log internal
 			return fmt.Errorf("error while converting token to string")
 		}
-	}
 
-	resp.Shares = make([]api.UserShare, len(stringTokens))
-	for i, s := range stringTokens {
+		if req.EncryptionKeys != nil {
+			// TODO Encrypt shares
+		}
+
 		resp.Shares[i] = api.UserShare{
 			Share: s,
 			// TODO Encrypt shares and set user accordingly

@@ -6,9 +6,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func playerStartCmd(client *api.Client) *cobra.Command {
+func dealerStartCmd(client *api.Client) *cobra.Command {
 
 	run := func(cmd *cobra.Command, args []string) error {
+
 		rawResp, _ := client.CreateSession(cmd.Context(), api.CreateSessionJSONRequestBody{
 			FirstShare: "",
 			Ttl:        nil,

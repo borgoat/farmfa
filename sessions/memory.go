@@ -2,6 +2,7 @@ package sessions
 
 import (
 	"github.com/giorgioazzinnaro/farmfa/api"
+	"github.com/giorgioazzinnaro/farmfa/ptr"
 	"github.com/giorgioazzinnaro/farmfa/random"
 	"github.com/giorgioazzinnaro/farmfa/shares"
 	"sync"
@@ -29,25 +30,29 @@ func (i *InMemory) Start(firstShare *shares.Token) (*api.PrivateSession, error) 
 	var resp api.PrivateSession
 	var err error
 
-	*resp.Id, err = random.String(25)
+	var str string
+	str, err = random.String(25)
 	if err != nil {
 		return nil, err
 	}
-	*resp.Private, err = random.String(25)
-	if err != nil {
-		return nil, err
-	}
+	resp.Id = ptr.String(str)
 
-	*resp.CreatedAt = time.Now()
-	*resp.ShareGroup = firstShare.Secret
-	*resp.Shares = int(firstShare.Total)
-	*resp.Threshold = int(firstShare.Threshold)
-	*resp.Complete = false
-	*resp.Closed = false
+	str, err = random.String(25)
+	if err != nil {
+		return nil, err
+	}
+	resp.Private = ptr.String(str)
+
+	resp.CreatedAt = ptr.Time(time.Now())
+	resp.ShareGroup = ptr.String(firstShare.Secret)
+	resp.Shares = ptr.Int(int(firstShare.Total))
+	resp.Threshold = ptr.Int(int(firstShare.Threshold))
+	resp.Complete = ptr.Bool(false)
+	resp.Closed = ptr.Bool(false)
 
 	i.sessions[SessionIdentifier(*resp.Id)] = &inMemSession{
 		session: &resp,
-		tokens:  []shares.Token{
+		tokens: []shares.Token{
 			*firstShare,
 		},
 	}
@@ -67,10 +72,18 @@ func (i *InMemory) AddShare(id SessionIdentifier, share *shares.Token) error {
 		return err
 	}
 
+	if session.tokens.IsComplete() {
+		session.session.Complete = ptr.Bool(true)
+	}
+
 	return nil
 }
 
 func (i *InMemory) Status(id SessionIdentifier) (*api.Session, error) {
 	// TODO Handle if i.sessions[id] is not there
 	return &i.sessions[id].session.Session, nil
+}
+
+func (i *InMemory) GenerateTOTP(id SessionIdentifier) (string, error) {
+	return i.sessions[id].tokens.GenerateTOTP()
 }

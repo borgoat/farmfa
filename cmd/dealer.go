@@ -12,5 +12,9 @@ func dealerCmd(client *api.Client) *cobra.Command {
 		Short:   "Dealers need help from players to retrieve secrets, they initiate sessions",
 	}
 
+	c.AddCommand(
+		dealerStartCmd(client),
+	)
+
 	return c
 }

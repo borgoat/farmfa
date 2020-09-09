@@ -12,13 +12,15 @@ func rootCmd() *cobra.Command {
 		Short: "Far away MFA",
 	}
 
+	v := viper.New()
+
 	c.PersistentFlags().StringP("address", "a", "http://localhost:8080", "The endpoint to the API")
-	_ = viper.BindPFlag("address", c.PersistentFlags().Lookup("address"))
-	_ = viper.BindEnv("address", "FARMFA_ADDRESS")
+	_ = v.BindPFlag("address", c.PersistentFlags().Lookup("address"))
+	_ = v.BindEnv("address", "FARMFA_ADDRESS")
 
-	viper.ReadInConfig()
+	_ = v.ReadInConfig()
 
-	defaultClient, err := api.NewClient(viper.GetString("address"))
+	defaultClient, err := api.NewClient(v.GetString("address"))
 	if err != nil {
 		panic(err)
 	}
@@ -26,9 +28,9 @@ func rootCmd() *cobra.Command {
 	c.AddCommand(
 		playerCmd(defaultClient),
 		dealerCmd(defaultClient),
-		sharesCmd(defaultClient),
+		sharesCmd(v, defaultClient),
 
-		serverCmd(&ServerConfig{}),
+		serverCmd(v),
 	)
 
 	return c

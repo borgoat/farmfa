@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"github.com/giorgioazzinnaro/farmfa/ptr"
 	"github.com/giorgioazzinnaro/farmfa/sessions"
 	"github.com/giorgioazzinnaro/farmfa/shares"
 	"net/http"
@@ -12,7 +13,7 @@ import (
 
 func (s Server) CreateSession(ctx echo.Context) error {
 	var (
-		req api.CreateSessionJSONRequestBody
+		req  api.CreateSessionJSONRequestBody
 		resp api.PrivateSession
 	)
 
@@ -51,7 +52,7 @@ func (s Server) GetSession(ctx echo.Context, id string) error {
 
 func (s Server) PostShare(ctx echo.Context, id string) error {
 	var (
-		req api.PostShareJSONRequestBody
+		req  api.PostShareJSONRequestBody
 		resp api.Session
 	)
 
@@ -60,7 +61,7 @@ func (s Server) PostShare(ctx echo.Context, id string) error {
 		return err
 	}
 
-	token, err := shares.Parse(*req.Share)
+	token, err := shares.Parse(req.Share)
 	if err != nil {
 		// TODO HTTP error handling
 		return fmt.Errorf("provided token is invalid: %w", err)
@@ -84,7 +85,7 @@ func (s Server) PostShare(ctx echo.Context, id string) error {
 func (s Server) GenerateTotp(ctx echo.Context, id string) error {
 	var (
 		req  api.GenerateTotpJSONRequestBody
-		resp api.GenerateTotpResponse
+		resp api.TOTPCode
 	)
 
 	// Parse the request body into req
@@ -92,26 +93,13 @@ func (s Server) GenerateTotp(ctx echo.Context, id string) error {
 		return err
 	}
 
-	//var (
-	//	sess *session
-	//	ok   bool
-	//)
-	//
-	//if sess, ok = s.sessions[id]; !ok || sess.private != *req.Private {
-	//	return ctx.String(http.StatusBadRequest, "invalid ID or private key")
-	//}
-	//
-	//otpSecretKey, err := sssa.Combine(sess.shares)
-	//if err != nil {
-	//	return ctx.String(http.StatusBadRequest, "some of the provided shares were invalid")
-	//}
-	//
-	//totp, err := totp.GenerateCode(otpSecretKey, time.Now())
-	//if err != nil {
-	//	return ctx.String(http.StatusBadRequest, "could not generate TOTP")
-	//}
+	totp, err := s.sm.GenerateTOTP(sessions.SessionIdentifier(id))
+	if err != nil {
+		// TODO HTTP error
+		return fmt.Errorf("failed to generate TOTP: %w", err)
+	}
 
-	//resp.JSON200.Totp = &totp
+	resp.Totp = ptr.String(string(totp))
 
 	return ctx.JSON(http.StatusOK, resp)
 }
