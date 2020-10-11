@@ -24,7 +24,7 @@ type Token struct {
 func (t *Token) String() (string, error) {
 	cborBytes, err := cbor.Marshal(t)
 	if err != nil {
-		return "", fmt.Errorf("error while marshalling to CBOR", err)
+		return "", fmt.Errorf("error while marshalling to CBOR: %w", err)
 	}
 
 	return base64.StdEncoding.EncodeToString(cborBytes), nil
