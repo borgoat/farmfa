@@ -1,5 +1,8 @@
 # farMFA
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/giorgioazzinnaro/farmfa)](https://goreportcard.com/report/github.com/giorgioazzinnaro/farmfa)
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/giorgioazzinnaro/farmfa)](https://pkg.go.dev/github.com/giorgioazzinnaro/farmfa)
+
 ## Concept
 
 Multi Factor Authentication is usually implemented by using the TOTP standard from OATH.
