@@ -1,6 +1,6 @@
-# DRAFT - farMFA
+# farMFA
 
-## Abstract
+## Concept
 
 Multi Factor Authentication is usually implemented by using the TOTP standard from OATH.
 
@@ -28,7 +28,25 @@ Some operations are stateless (the creation of the shares), while managing authe
 Nothing is ever persisted on disk for higher security.
 
 ```sh
-$ farmfa serve
+$ farmfa 
+Far away MFA
+
+Usage:
+  farmfa [command]
+
+Available Commands:
+  dealer      Dealers need help from players to retrieve secrets, they initiate sessions
+  help        Help about any command
+  server      Start the server
+  shares      Commands to manage TOTP shares
+
+Flags:
+  -a, --address string   The endpoint to the API (default "http://localhost:8080")
+  -h, --help             help for farmfa
+
+Additional help topics:
+  farmfa player Players are those holding shares and helping a dealer retrieve a secret
+
 ```
 
 ### Bootstrap
