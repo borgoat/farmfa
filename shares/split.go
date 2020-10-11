@@ -16,7 +16,7 @@ func Split(secret TOTPSecret, threshold, total uint) ([]Token, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not split shares: %w", err)
 	}
-	
+
 	tokens := make([]Token, total)
 	for i, share := range shares {
 		tokens[i] = Token{
@@ -27,6 +27,6 @@ func Split(secret TOTPSecret, threshold, total uint) ([]Token, error) {
 			Share:     share,
 		}
 	}
-	
+
 	return tokens, nil
 }

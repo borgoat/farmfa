@@ -16,4 +16,3 @@ func New(sm sessions.SessionManager) *Server {
 		sm: sm,
 	}
 }
-

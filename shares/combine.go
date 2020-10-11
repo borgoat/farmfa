@@ -67,7 +67,7 @@ func validateTokensFromSameSecret(tokens []Token) error {
 
 var ErrNotEnoughTokens = errors.New("the provided tokens are not enough to cross the threshold")
 
-func validateEnoughTokens(tokens []Token) error  {
+func validateEnoughTokens(tokens []Token) error {
 	if tokens[0].Threshold > uint(len(tokens)) {
 		return ErrNotEnoughTokens
 	}
