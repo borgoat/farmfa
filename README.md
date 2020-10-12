@@ -1,5 +1,6 @@
 # farMFA
 
+[![License](https://img.shields.io/github/license/giorgioazzinnaro/farmfa?color=blue&style=flat-square)](LICENSE)
 [![Go Report Card](https://goreportcard.com/badge/github.com/giorgioazzinnaro/farmfa)](https://goreportcard.com/report/github.com/giorgioazzinnaro/farmfa)
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/giorgioazzinnaro/farmfa)](https://pkg.go.dev/github.com/giorgioazzinnaro/farmfa)
 
@@ -7,7 +8,8 @@
 
 Multi Factor Authentication is usually implemented by using the TOTP standard from OATH.
 
-* A secret key is shared upon activation and stored by the user (usually in an app such as Authenticator) and by the authentication server.  
+* A secret key is shared upon activation and stored by the user (usually in an app such as Authenticator)
+  and by the authentication server.  
 * Upon login, the user, after providing the credentials, will input a One-Time Password.
   This password is generated applying the TOTP algorithm to the secret key and to the current time.
 * The server will generate the same password, and if they match, the user will be able to go through.
@@ -16,18 +18,24 @@ Multi Factor Authentication is usually implemented by using the TOTP standard fr
 The generated One-Time Password, as the name suggests, may only be used once
 (or more precisely, within a timeframe of around 30 seconds to 90 seconds, depending on the server implementation).
 
-farMFA comes into play in enterprise environments where access to certain accounts should be restricted to very special occasions
-(for example, access to the root user of an AWS master account).  
-In this context, we can secure the access so that, after the credentials to the account are retrieved,
+farMFA comes into play in enterprise environments where access to certain accounts
+should be restricted to very special occasions
+(for example, access to the root user of an AWS account,
+especially the root user of the root account of an AWS Organization).  
+In this context, we can secure the access in such a way that, after the credentials to the account are retrieved,
 the second level of authorisation must come from multiple individuals.  
-First of all, we apply __Shamir's Secret Sharing__ to the original TOTP secret key, so that at least 3 of 5 holders are needed to reconstruct it.
-Additionally, the TOTP secret key is only ever reconstructed in farMFA's server memory, so that no single player ever has to risk losing it.
-After having reconstructed the secret, farMFA will then generate one or more OTPs for the user, until the session expires.
+First of all, we apply __Shamir's Secret Sharing__ to the original TOTP secret key,
+so that at least 3 of 5 holders are needed to reconstruct it.
+Additionally, the TOTP secret key is only ever reconstructed in farMFA's server memory,
+meaning no single player has ever to risk accessing and accidentally leaking/persisting it.
+After having reconstructed the secret, farMFA will then generate one or more OTPs for the dealer,
+until the session expires.
 
 ## Getting started
 
 farMFA is a client-server application.
-Some operations are stateless (the creation of the shares), while managing authentication sessions relies on the server memory.
+Some operations are stateless (the creation of the shares) and may even be executed client-side,
+while managing authentication sessions (joining shares, generating TOTP) relies on the server memory.
 Nothing is ever persisted on disk for higher security.
 
 ```sh
