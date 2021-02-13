@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"filippo.io/age"
+	"filippo.io/age/armor"
 	"github.com/giorgioazzinnaro/farmfa/deal"
 	"github.com/giorgioazzinnaro/farmfa/random"
 	"github.com/stretchr/testify/assert"
@@ -57,7 +58,8 @@ func TestCreateTocs_basic(t *testing.T) {
 		plid := samplePlayerIdentities[i]
 
 		r := strings.NewReader(toc)
-		decrypter, err := age.Decrypt(r, plid.id)
+		armorR := armor.NewReader(r)
+		decrypter, err := age.Decrypt(armorR, plid.id)
 		assert.NoError(t, err)
 
 		w, err := io.Copy(ioutil.Discard, decrypter)

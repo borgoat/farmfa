@@ -2,9 +2,11 @@ package deal
 
 import (
 	"bytes"
+	"fmt"
+
 	"encoding/json"
 	"filippo.io/age"
-	"fmt"
+	"filippo.io/age/armor"
 	"github.com/giorgioazzinnaro/farmfa/api"
 )
 
@@ -37,7 +39,9 @@ func EncryptWithAge(player age.Recipient) EncryptFunc {
 	return func(toc *api.Toc) (string, error) {
 		var out bytes.Buffer
 
-		w, err := age.Encrypt(&out, player)
+		armorW := armor.NewWriter(&out)
+
+		w, err := age.Encrypt(armorW, player)
 		if err != nil {
 			return "", fmt.Errorf("failed to create encrypted buffer: %w", err)
 		}
@@ -53,6 +57,10 @@ func EncryptWithAge(player age.Recipient) EncryptFunc {
 			return "", fmt.Errorf("failed to close encrypted buffer %w", err)
 		}
 
+		err = armorW.Close()
+		if err != nil {
+			return "", fmt.Errorf("failed to close armor: %w", err)
+		}
 		return out.String(), nil
 	}
 }
