@@ -48,8 +48,9 @@ Additionally, the dealer SHOULD define an encryption strategy for each player.
 === Starting a new session
 
 When an applicant needs to access an account, and thus needs to generate the corresponding TOTP, they start a session.
-A session is represented by an identifier (that of the group of Tocs), a public key, and a private key
-(that is in part shared with the applicant, and in part kept by the oracle).
+A session is represented by an identifier (that of the group of Tocs).
+Along with the identifier, the applicant is provided with a public key (Toc encryption key -- or _TEK_),
+and a key encryption key (_KEK_).
 With this information, the applicant can ask _n_ constituents to join the session.
 More precisely, they share the public key, and the identifier.
 
@@ -59,7 +60,11 @@ An applicant asks a constituent (a Toc holder) to join a session, and authorise 
 To identify the session, the applicant sends an identifier (that uniquely identifies the group of Tocs),
 and a public key, that is unique to the current session.
 The constituent who wants to authorise the applicant, will fetch their Toc based on the identifier,
-encrypt it with the public key, and send it to the oracle.
+encrypt it with the Toc encryption key, and send it to the oracle.
+When _t_ constituents shared their Tocs with the oracle, the applicant may query the oracle,
+with the session identifier along with the key encryption key.
+With this information, the oracle can decrypt the Toc encryption key, and with that decrypt all Tocs.
+With all Tocs, the oracle may now generate 1 TOTP and share it back to the applicant.
 
 === Flows
 ==== Splitting the TOTP secret (_Deal_)
@@ -104,23 +109,24 @@ actor     "constituent 1" as c1
 actor     "constituent 2" as c2
 
 a -> o:   CreateSession(Toc<sub>1</sub>)
-return    SessionKeypair
+return    SessionKeypair(KEK, TEK, GroupID)
 
 note right
 SessionKeypair is composed of:
-* part of a private key
-* public key
-* Toc identifier
+* key encryption key (KEK)
+* Toc encryption public key (TEK)
+* Toc Group identifier (GroupID)
 end note
 
-a  -> c1:  session identifier (public key + TocID)
-a  -> c2:  session identifier (public key + TocID)
-c1 -> o:   Toc encrypted with session public key
-c2 -> o:   Toc encrypted with session public key
+a  -> c1:  Share (TEK, GroupID)
+a  -> c2:  Share (TEK, GroupID)
+c1 -> o:   Send {Toc<sub>2</sub>}<sub>TEK</sub>
+c2 -> o:   Send {Toc<sub>3</sub>}<sub>TEK</sub>
 
-a -> o:   GenerateTOTP (private key)
-o -> o:   decrypt each Toc with private key
-o -> a:   return TOTP
+a ->  o:   GenerateTOTP (KEK)
+o --> o:   decrypt TEK with KEK,\nthen each Toc with TEK
+o --> o:   join decrypted Tocs\nand generate TOTP
+o --> a:   TOTP
 ....
 
 [bibliography]
