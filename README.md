@@ -1,8 +1,8 @@
 # farMFA
 
-[![License](https://img.shields.io/github/license/giorgioazzinnaro/farmfa?color=blue&style=flat-square)](LICENSE)
-[![Go Report Card](https://goreportcard.com/badge/github.com/giorgioazzinnaro/farmfa)](https://goreportcard.com/report/github.com/giorgioazzinnaro/farmfa)
-[![PkgGoDev](https://pkg.go.dev/badge/github.com/giorgioazzinnaro/farmfa)](https://pkg.go.dev/github.com/giorgioazzinnaro/farmfa)
+[![License](https://img.shields.io/github/license/borgoat/farmfa?color=blue&style=flat-square)](LICENSE)
+[![Go Report Card](https://goreportcard.com/badge/github.com/borgoat/farmfa)](https://goreportcard.com/report/github.com/borgoat/farmfa)
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/borgoat/farmfa)](https://pkg.go.dev/github.com/borgoat/farmfa)
 
 ## Concept
 
