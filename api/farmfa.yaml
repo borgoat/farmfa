@@ -1,6 +1,6 @@
 openapi: "3.0.0"
 info:
-  version: 0.1.0
+  version: 0.2.0
   title: farMFA
   description: An API to manage TOTP with shared secrets
   contact:
@@ -14,51 +14,38 @@ servers:
   - url: https://farmfa.example.com/v1alpha1
   - url: /
 paths:
-  /shares:
-    post:
-      tags:
-        - shares
-      summary: Split a TOTP secret key
-      operationId: createShares
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TOTPSecret'
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TOTPShares'
-        default:
-          $ref: '#/components/responses/DefaultError'
 
   /sessions:
     post:
       tags:
         - session
-      summary: Start a new authentication session
+      summary: Start a new session
+      description: >
+        A session describes the workflow in which an applicant requires combining Tocs to generate a TOTP.
+        The applicant must already have a Toc
       operationId: createSession
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/NewSession'
       responses:
+        default:
+          $ref: '#/components/responses/DefaultError'
         '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PrivateSession'
+                $ref: '#/components/schemas/SessionCredentials'
 
   /sessions/{id}:
     get:
-      operationId: getSession
       tags:
         - session
+      summary: Retrieve a session details by its ID
+      operationId: getSession
       parameters:
         - name: id
           in: path
@@ -67,6 +54,8 @@ paths:
           schema:
             type: string
       responses:
+        default:
+          $ref: '#/components/responses/DefaultError'
         '200':
           description: OK
           content:
@@ -74,33 +63,35 @@ paths:
               schema:
                 $ref: '#/components/schemas/Session'
 
-  /sessions/{id}/shares:
+  /sessions/{id}/tocs:
     post:
-      description: Join a new share to an existing session
-      operationId: postShare
       tags:
         - session
+        - toc
+      summary: Join a new Toc to an existing session
+      operationId: postToc
       parameters:
         - name: id
           in: path
-          description: ID of session for which to add the share
+          description: ID of session for which to add the Toc
           required: true
           schema:
             type: string
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DecryptedShare'
+              $ref: '#/components/schemas/AddToc'
       responses:
+        default:
+          $ref: '#/components/responses/DefaultError'
         '200':
           description: OK
-        '400':
-          description: Bad request
 
   /sessions/{id}/totp:
     post:
-      description: Close the session and generate the TOTP
+      summary: Close the session and generate the TOTP
       operationId: generateTotp
       tags:
         - session
@@ -115,126 +106,77 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SessionCredentials'
+              $ref: '#/components/schemas/SessionPrivateKey'
       responses:
+        default:
+          $ref: '#/components/responses/DefaultError'
         '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TOTPCode'
+                $ref: '#/components/schemas/OracleResponse'
 
 components:
   schemas:
-    TOTPSecret:
-      type: object
-      properties:
-        totp_secret_key:
-          type: string
-          description: The secret key to generate the TOTP, either as a path or just the Base32 secret
-        encryption_keys:
-          type: array
-          description: The keys to encrypt the shares, its length must be equal to `shares`
-          example:
-            - kind: remote
-              from: pgp
-              search: 1B85DB43E82375DCBEB595C810159FC43E7F4AA1
-            - kind: remote
-              from: keybase.io
-              search: giorgioazzinnaro
-            - kind: local
-              format: age
-              key: age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p
-              recipient: giorgio@azzinna.ro
-          items:
-            type: object
-            properties:
-              search:
-                type: string
-                description: Address to retrieve the public key
-              from:
-                type: string
-                enum:
-                  - pgp
-                  - keybase.io
-                  - keys.pub
-        shares:
-          type: integer
-          minimum: 2
-          example: 5
-          default: 5
-          description: The number of shares to create
-        threshold:
-          type: integer
-          minimum: 2
-          example: 3
-          default: 3
-          description: The minimum number of shares required to generate the TOTP
-      required:
-        - totp_secret_key
-        - shares
-        - threshold
-
-    UserShare:
-      type: object
-      properties:
-        user:
-          type: string
-          description: The user this share belongs to
-        share:
-          type: string
-          description: The possibly encrypted share for this user
-      required:
-        - share
-
-    TOTPShares:
-      type: object
-      properties:
-        shares:
-          type: array
-          items:
-            $ref: '#/components/schemas/UserShare'
-      required:
-        - shares
-
     NewSession:
       type: object
       properties:
-        first_share:
+        toc_zero:
           type: string
-          description: A first share owned by the dealer
+          description: A first Toc owned by the applicant
         ttl:
           type: integer
           minimum: 60
           maximum: 86400
           default: 60
-          description: Seconds until the TOTP generation endpoint expires, starting from the first token generated.
+          description: Seconds until the TOTP generation endpoint expires, starting from the first TOTP generated.
       required:
-        - first_share
-
-    PrivateSession:
-      type: object
-      allOf:
-        - $ref: '#/components/schemas/Session'
-        - $ref: '#/components/schemas/SessionCredentials'
+        - toc_zero
 
     SessionCredentials:
       type: object
+      description: >
+        Returned when creating a new Session.
+        This object should be kept secret by the applicant, and used when generating the TOTP.
+      allOf:
+        - $ref: '#/components/schemas/Session'
+        - $ref: '#/components/schemas/SessionPublicKey'
+        - $ref: '#/components/schemas/SessionPrivateKey'
+
+    SessionPublicKey:
+      type: object
       properties:
-        private:
+        public_key:
           type: string
-          description: The password to retrieve a TOTP from a session
+          description: >
+            A public key used by constituents to encrypt their Tocs before sharing them with the oracle.
+            The applicant receives it when creating a sessions,
+            and must share it with constituents when requesting their approval.
+
+    SessionPrivateKey:
+      type: object
+      properties:
+        private_key:
+          type: string
+          description: >
+            A part of a private key (the other half is kept by the oracle) used to decrypt Tocs given by constituents.
+            This part of private key must be kept by the applicant, so that it may be given to the oracle,
+            when requesting a TOTP to be generated.
 
     Session:
       type: object
       properties:
         id:
           type: string
-          description: The public identifier of a session
-        closes_at:
+          description: The identifier of a session
+        toc_group_id:
+          type: string
+          description: An identifier for the group of Tocs used in this session
+        expires_at:
           type: string
           format: date-time
-          description: When the sessions will close down and no longer accept shares
+          description: When the sessions will expire and no longer accept Tocs
         created_at:
           type: string
           format: date-time
@@ -246,30 +188,47 @@ components:
           description: Seconds until the TOTP generation endpoint expires, starting from the first token generated.
         complete:
           type: boolean
-          description: True when enough shares have been provided
-        closed:
-          type: boolean
-          description: True when the session either expired or the token was already retrieved by the dealer
-        shares:
+          description: True when enough Tocs have been provided and TOTPs may be generated
+        tocs_in_group:
           type: integer
           minimum: 2
-          description: The total number of shares
-        threshold:
+          description: The total number of Tocs in the group
+        tocs_threshold:
           type: integer
           minimum: 2
-          description: The minimum number of shares required
-        share_group:
-          type: string
-          description: The prefix to identify shares from different secrets
+          description: The minimum number of Tocs required
+        tocs_provided:
+          type: integer
+          minimum: 1
+          description: The number of Tocs already provided by consituents to the oracle for this session
 
-    DecryptedShare:
+    AddToc:
       type: object
-      required:
-        - share
       properties:
-        share:
+        toc:
+          $ref: '#/components/schemas/Toc'
+
+    Toc:
+      description: A Toc is a "piece" in which a TOTP secret gets split.
+      type: object
+      properties:
+        toc_id:
           type: string
-          description: The share from the current user
+          description: A Toc is unique, this ID ensures a Toc is not reused
+        group_id:
+          type: string
+          description: Each Toc is part of a group. Tocs from the same group can reconstruct a secret
+        group_size:
+          type: integer
+          description: The number of Tocs in the group
+          minimum: 2
+        group_threshold:
+          type: integer
+          description: The nubmer of Tocs needed to reconstruct the secret
+          minimum: 2
+        note:
+          type: string
+          description: Free-text to describe the purpose of a Toc
 
     TOTPCode:
       type: object
@@ -282,10 +241,22 @@ components:
           type: string
           format: date-time
           description: The time when the current TOTP will expire
-        endpoint_expires_at:
+        session_expires_at:
           type: string
           format: date-time
-          description: The time when this endpoint will expire and cannot be called again
+          description: The time when this session will expire and cannot be called again
+
+    OracleResponse:
+      description: >
+        Depending on the status of the Session, either return a description of the Session itself, or the TOTP code
+      oneOf:
+        - $ref: '#/components/schemas/Session'
+        - $ref: '#/components/schemas/TOTPCode'
+      discriminator:
+        propertyName: status
+        mapping:
+          processing: '#/components/schemas/Session'
+          complete: '#/components/schemas/TOTPCode'
 
 # All errors
     Error:

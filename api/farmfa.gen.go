@@ -22,11 +22,11 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// DecryptedShare defines model for DecryptedShare.
-type DecryptedShare struct {
+// AddToc defines model for AddToc.
+type AddToc struct {
 
-	// The share from the current user
-	Share string `json:"share"`
+	// A Toc is a "piece" in which a TOTP secret gets split.
+	Toc *Toc `json:"toc,omitempty"`
 }
 
 // Error defines model for Error.
@@ -38,47 +38,42 @@ type Error struct {
 // NewSession defines model for NewSession.
 type NewSession struct {
 
-	// A first share owned by the dealer
-	FirstShare string `json:"first_share"`
+	// A first Toc owned by the applicant
+	TocZero string `json:"toc_zero"`
 
-	// Seconds until the TOTP generation endpoint expires, starting from the first token generated.
+	// Seconds until the TOTP generation endpoint expires, starting from the first TOTP generated.
 	Ttl *int `json:"ttl,omitempty"`
 }
 
-// PrivateSession defines model for PrivateSession.
-type PrivateSession struct {
-	// Embedded struct due to allOf(#/components/schemas/Session)
-	Session
-	// Embedded struct due to allOf(#/components/schemas/SessionCredentials)
-	SessionCredentials
-}
+// OracleResponse defines model for OracleResponse.
+type OracleResponse interface{}
 
 // Session defines model for Session.
 type Session struct {
 
-	// True when the session either expired or the token was already retrieved by the dealer
-	Closed *bool `json:"closed,omitempty"`
-
-	// When the sessions will close down and no longer accept shares
-	ClosesAt *time.Time `json:"closes_at,omitempty"`
-
-	// True when enough shares have been provided
+	// True when enough Tocs have been provided and TOTPs may be generated
 	Complete *bool `json:"complete,omitempty"`
 
 	// The time when the session started
 	CreatedAt *time.Time `json:"created_at,omitempty"`
 
-	// The public identifier of a session
+	// When the sessions will expire and no longer accept Tocs
+	ExpiresAt *time.Time `json:"expires_at,omitempty"`
+
+	// The identifier of a session
 	Id *string `json:"id,omitempty"`
 
-	// The prefix to identify shares from different secrets
-	ShareGroup *string `json:"share_group,omitempty"`
+	// An identifier for the group of Tocs used in this session
+	TocGroupId *string `json:"toc_group_id,omitempty"`
 
-	// The total number of shares
-	Shares *int `json:"shares,omitempty"`
+	// The total number of Tocs in the group
+	TocsInGroup *int `json:"tocs_in_group,omitempty"`
 
-	// The minimum number of shares required
-	Threshold *int `json:"threshold,omitempty"`
+	// The number of Tocs already provided by consituents to the oracle for this session
+	TocsProvided *int `json:"tocs_provided,omitempty"`
+
+	// The minimum number of Tocs required
+	TocsThreshold *int `json:"tocs_threshold,omitempty"`
 
 	// Seconds until the TOTP generation endpoint expires, starting from the first token generated.
 	Ttl *int `json:"ttl,omitempty"`
@@ -86,16 +81,33 @@ type Session struct {
 
 // SessionCredentials defines model for SessionCredentials.
 type SessionCredentials struct {
+	// Embedded struct due to allOf(#/components/schemas/Session)
+	Session `yaml:",inline"`
+	// Embedded struct due to allOf(#/components/schemas/SessionPublicKey)
+	SessionPublicKey `yaml:",inline"`
+	// Embedded struct due to allOf(#/components/schemas/SessionPrivateKey)
+	SessionPrivateKey `yaml:",inline"`
+}
 
-	// The password to retrieve a TOTP from a session
-	Private *string `json:"private,omitempty"`
+// SessionPrivateKey defines model for SessionPrivateKey.
+type SessionPrivateKey struct {
+
+	// A part of a private key (the other half is kept by the oracle) used to decrypt Tocs given by constituents. This part of private key must be kept by the applicant, so that it may be given to the oracle, when requesting a TOTP to be generated.
+	PrivateKey *string `json:"private_key,omitempty"`
+}
+
+// SessionPublicKey defines model for SessionPublicKey.
+type SessionPublicKey struct {
+
+	// A public key used by constituents to encrypt their Tocs before sharing them with the oracle. The applicant receives it when creating a sessions, and must share it with constituents when requesting their approval.
+	PublicKey *string `json:"public_key,omitempty"`
 }
 
 // TOTPCode defines model for TOTPCode.
 type TOTPCode struct {
 
-	// The time when this endpoint will expire and cannot be called again
-	EndpointExpiresAt *time.Time `json:"endpoint_expires_at,omitempty"`
+	// The time when this session will expire and cannot be called again
+	SessionExpiresAt *time.Time `json:"session_expires_at,omitempty"`
 
 	// The current TOTP
 	Totp *string `json:"totp,omitempty"`
@@ -104,40 +116,23 @@ type TOTPCode struct {
 	TotpExpiresAt *time.Time `json:"totp_expires_at,omitempty"`
 }
 
-// TOTPSecret defines model for TOTPSecret.
-type TOTPSecret struct {
+// Toc defines model for Toc.
+type Toc struct {
 
-	// The keys to encrypt the shares, its length must be equal to `shares`
-	EncryptionKeys *[]struct {
-		From *string `json:"from,omitempty"`
+	// Each Toc is part of a group. Tocs from the same group can reconstruct a secret
+	GroupId *string `json:"group_id,omitempty"`
 
-		// Address to retrieve the public key
-		Search *string `json:"search,omitempty"`
-	} `json:"encryption_keys,omitempty"`
+	// The number of Tocs in the group
+	GroupSize *int `json:"group_size,omitempty"`
 
-	// The number of shares to create
-	Shares int `json:"shares"`
+	// The nubmer of Tocs needed to reconstruct the secret
+	GroupThreshold *int `json:"group_threshold,omitempty"`
 
-	// The minimum number of shares required to generate the TOTP
-	Threshold int `json:"threshold"`
+	// Free-text to describe the purpose of a Toc
+	Note *string `json:"note,omitempty"`
 
-	// The secret key to generate the TOTP, either as a path or just the Base32 secret
-	TotpSecretKey string `json:"totp_secret_key"`
-}
-
-// TOTPShares defines model for TOTPShares.
-type TOTPShares struct {
-	Shares []UserShare `json:"shares"`
-}
-
-// UserShare defines model for UserShare.
-type UserShare struct {
-
-	// The possibly encrypted share for this user
-	Share string `json:"share"`
-
-	// The user this share belongs to
-	User *string `json:"user,omitempty"`
+	// A Toc is unique, this ID ensures a Toc is not reused
+	TocId *string `json:"toc_id,omitempty"`
 }
 
 // DefaultError defines model for DefaultError.
@@ -146,26 +141,20 @@ type DefaultError Error
 // CreateSessionJSONBody defines parameters for CreateSession.
 type CreateSessionJSONBody NewSession
 
-// PostShareJSONBody defines parameters for PostShare.
-type PostShareJSONBody DecryptedShare
+// PostTocJSONBody defines parameters for PostToc.
+type PostTocJSONBody AddToc
 
 // GenerateTotpJSONBody defines parameters for GenerateTotp.
-type GenerateTotpJSONBody SessionCredentials
+type GenerateTotpJSONBody SessionPrivateKey
 
-// CreateSharesJSONBody defines parameters for CreateShares.
-type CreateSharesJSONBody TOTPSecret
-
-// CreateSessionRequestBody defines body for CreateSession for application/json ContentType.
+// CreateSessionJSONRequestBody defines body for CreateSession for application/json ContentType.
 type CreateSessionJSONRequestBody CreateSessionJSONBody
 
-// PostShareRequestBody defines body for PostShare for application/json ContentType.
-type PostShareJSONRequestBody PostShareJSONBody
+// PostTocJSONRequestBody defines body for PostToc for application/json ContentType.
+type PostTocJSONRequestBody PostTocJSONBody
 
-// GenerateTotpRequestBody defines body for GenerateTotp for application/json ContentType.
+// GenerateTotpJSONRequestBody defines body for GenerateTotp for application/json ContentType.
 type GenerateTotpJSONRequestBody GenerateTotpJSONBody
-
-// CreateSharesRequestBody defines body for CreateShares for application/json ContentType.
-type CreateSharesJSONRequestBody CreateSharesJSONBody
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
@@ -180,16 +169,18 @@ type HttpRequestDoer interface {
 // Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
 	// The endpoint of the server conforming to this interface, with scheme,
-	// https://api.deepmap.com for example.
+	// https://api.deepmap.com for example. This can contain a path relative
+	// to the server, such as https://api.deepmap.com/dev-test, and all the
+	// paths in the swagger spec will be appended to the server.
 	Server string
 
 	// Doer for performing requests, typically a *http.Client with any
 	// customized settings, such as certificate chains.
 	Client HttpRequestDoer
 
-	// A callback for modifying requests which are generated before sending over
+	// A list of callbacks for modifying requests which are generated before sending over
 	// the network.
-	RequestEditor RequestEditorFn
+	RequestEditors []RequestEditorFn
 }
 
 // ClientOption allows setting custom parameters during construction
@@ -231,7 +222,7 @@ func WithHTTPClient(doer HttpRequestDoer) ClientOption {
 // called right before sending the request. This can be used to mutate the request.
 func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 	return func(c *Client) error {
-		c.RequestEditor = fn
+		c.RequestEditors = append(c.RequestEditors, fn)
 		return nil
 	}
 }
@@ -239,160 +230,97 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 // The interface specification for the client above.
 type ClientInterface interface {
 	// CreateSession request  with any body
-	CreateSessionWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
+	CreateSessionWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	CreateSession(ctx context.Context, body CreateSessionJSONRequestBody) (*http.Response, error)
+	CreateSession(ctx context.Context, body CreateSessionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetSession request
-	GetSession(ctx context.Context, id string) (*http.Response, error)
+	GetSession(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PostShare request  with any body
-	PostShareWithBody(ctx context.Context, id string, contentType string, body io.Reader) (*http.Response, error)
+	// PostToc request  with any body
+	PostTocWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	PostShare(ctx context.Context, id string, body PostShareJSONRequestBody) (*http.Response, error)
+	PostToc(ctx context.Context, id string, body PostTocJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GenerateTotp request  with any body
-	GenerateTotpWithBody(ctx context.Context, id string, contentType string, body io.Reader) (*http.Response, error)
+	GenerateTotpWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	GenerateTotp(ctx context.Context, id string, body GenerateTotpJSONRequestBody) (*http.Response, error)
-
-	// CreateShares request  with any body
-	CreateSharesWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
-
-	CreateShares(ctx context.Context, body CreateSharesJSONRequestBody) (*http.Response, error)
+	GenerateTotp(ctx context.Context, id string, body GenerateTotpJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
-func (c *Client) CreateSessionWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
+func (c *Client) CreateSessionWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCreateSessionRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
 	}
-	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
 	}
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateSession(ctx context.Context, body CreateSessionJSONRequestBody) (*http.Response, error) {
+func (c *Client) CreateSession(ctx context.Context, body CreateSessionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCreateSessionRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
-	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
 	}
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetSession(ctx context.Context, id string) (*http.Response, error) {
+func (c *Client) GetSession(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetSessionRequest(c.Server, id)
 	if err != nil {
 		return nil, err
 	}
-	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
 	}
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostShareWithBody(ctx context.Context, id string, contentType string, body io.Reader) (*http.Response, error) {
-	req, err := NewPostShareRequestWithBody(c.Server, id, contentType, body)
+func (c *Client) PostTocWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostTocRequestWithBody(c.Server, id, contentType, body)
 	if err != nil {
 		return nil, err
 	}
-	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
 	}
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostShare(ctx context.Context, id string, body PostShareJSONRequestBody) (*http.Response, error) {
-	req, err := NewPostShareRequest(c.Server, id, body)
+func (c *Client) PostToc(ctx context.Context, id string, body PostTocJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostTocRequest(c.Server, id, body)
 	if err != nil {
 		return nil, err
 	}
-	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
 	}
 	return c.Client.Do(req)
 }
 
-func (c *Client) GenerateTotpWithBody(ctx context.Context, id string, contentType string, body io.Reader) (*http.Response, error) {
+func (c *Client) GenerateTotpWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGenerateTotpRequestWithBody(c.Server, id, contentType, body)
 	if err != nil {
 		return nil, err
 	}
-	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
 	}
 	return c.Client.Do(req)
 }
 
-func (c *Client) GenerateTotp(ctx context.Context, id string, body GenerateTotpJSONRequestBody) (*http.Response, error) {
+func (c *Client) GenerateTotp(ctx context.Context, id string, body GenerateTotpJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGenerateTotpRequest(c.Server, id, body)
 	if err != nil {
 		return nil, err
 	}
-	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) CreateSharesWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
-	req, err := NewCreateSharesRequestWithBody(c.Server, contentType, body)
-	if err != nil {
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) CreateShares(ctx context.Context, body CreateSharesJSONRequestBody) (*http.Response, error) {
-	req, err := NewCreateSharesRequest(c.Server, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
 	}
 	return c.Client.Do(req)
 }
@@ -433,6 +361,7 @@ func NewCreateSessionRequestWithBody(server string, contentType string, body io.
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
 	return req, nil
 }
 
@@ -470,19 +399,19 @@ func NewGetSessionRequest(server string, id string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewPostShareRequest calls the generic PostShare builder with application/json body
-func NewPostShareRequest(server string, id string, body PostShareJSONRequestBody) (*http.Request, error) {
+// NewPostTocRequest calls the generic PostToc builder with application/json body
+func NewPostTocRequest(server string, id string, body PostTocJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewPostShareRequestWithBody(server, id, "application/json", bodyReader)
+	return NewPostTocRequestWithBody(server, id, "application/json", bodyReader)
 }
 
-// NewPostShareRequestWithBody generates requests for PostShare with any type of body
-func NewPostShareRequestWithBody(server string, id string, contentType string, body io.Reader) (*http.Request, error) {
+// NewPostTocRequestWithBody generates requests for PostToc with any type of body
+func NewPostTocRequestWithBody(server string, id string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -497,7 +426,7 @@ func NewPostShareRequestWithBody(server string, id string, contentType string, b
 		return nil, err
 	}
 
-	basePath := fmt.Sprintf("/sessions/%s/shares", pathParam0)
+	basePath := fmt.Sprintf("/sessions/%s/tocs", pathParam0)
 	if basePath[0] == '/' {
 		basePath = basePath[1:]
 	}
@@ -513,6 +442,7 @@ func NewPostShareRequestWithBody(server string, id string, contentType string, b
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
 	return req, nil
 }
 
@@ -559,46 +489,23 @@ func NewGenerateTotpRequestWithBody(server string, id string, contentType string
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
 	return req, nil
 }
 
-// NewCreateSharesRequest calls the generic CreateShares builder with application/json body
-func NewCreateSharesRequest(server string, body CreateSharesJSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
+func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
+	req = req.WithContext(ctx)
+	for _, r := range c.RequestEditors {
+		if err := r(ctx, req); err != nil {
+			return err
+		}
 	}
-	bodyReader = bytes.NewReader(buf)
-	return NewCreateSharesRequestWithBody(server, "application/json", bodyReader)
-}
-
-// NewCreateSharesRequestWithBody generates requests for CreateShares with any type of body
-func NewCreateSharesRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
-	var err error
-
-	queryUrl, err := url.Parse(server)
-	if err != nil {
-		return nil, err
+	for _, r := range additionalEditors {
+		if err := r(ctx, req); err != nil {
+			return err
+		}
 	}
-
-	basePath := fmt.Sprintf("/shares")
-	if basePath[0] == '/' {
-		basePath = basePath[1:]
-	}
-
-	queryUrl, err = queryUrl.Parse(basePath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("POST", queryUrl.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Content-Type", contentType)
-	return req, nil
+	return nil
 }
 
 // ClientWithResponses builds on ClientInterface to offer response payloads
@@ -638,26 +545,22 @@ type ClientWithResponsesInterface interface {
 	// GetSession request
 	GetSessionWithResponse(ctx context.Context, id string) (*GetSessionResponse, error)
 
-	// PostShare request  with any body
-	PostShareWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader) (*PostShareResponse, error)
+	// PostToc request  with any body
+	PostTocWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader) (*PostTocResponse, error)
 
-	PostShareWithResponse(ctx context.Context, id string, body PostShareJSONRequestBody) (*PostShareResponse, error)
+	PostTocWithResponse(ctx context.Context, id string, body PostTocJSONRequestBody) (*PostTocResponse, error)
 
 	// GenerateTotp request  with any body
 	GenerateTotpWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader) (*GenerateTotpResponse, error)
 
 	GenerateTotpWithResponse(ctx context.Context, id string, body GenerateTotpJSONRequestBody) (*GenerateTotpResponse, error)
-
-	// CreateShares request  with any body
-	CreateSharesWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*CreateSharesResponse, error)
-
-	CreateSharesWithResponse(ctx context.Context, body CreateSharesJSONRequestBody) (*CreateSharesResponse, error)
 }
 
 type CreateSessionResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *PrivateSession
+	JSON200      *SessionCredentials
+	JSONDefault  *Error
 }
 
 // Status returns HTTPResponse.Status
@@ -680,6 +583,7 @@ type GetSessionResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *Session
+	JSONDefault  *Error
 }
 
 // Status returns HTTPResponse.Status
@@ -698,13 +602,14 @@ func (r GetSessionResponse) StatusCode() int {
 	return 0
 }
 
-type PostShareResponse struct {
+type PostTocResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+	JSONDefault  *Error
 }
 
 // Status returns HTTPResponse.Status
-func (r PostShareResponse) Status() string {
+func (r PostTocResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -712,7 +617,7 @@ func (r PostShareResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r PostShareResponse) StatusCode() int {
+func (r PostTocResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -722,7 +627,8 @@ func (r PostShareResponse) StatusCode() int {
 type GenerateTotpResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *TOTPCode
+	JSON200      *OracleResponse
+	JSONDefault  *Error
 }
 
 // Status returns HTTPResponse.Status
@@ -735,29 +641,6 @@ func (r GenerateTotpResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GenerateTotpResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type CreateSharesResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *TOTPShares
-	JSONDefault  *Error
-}
-
-// Status returns HTTPResponse.Status
-func (r CreateSharesResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r CreateSharesResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -790,21 +673,21 @@ func (c *ClientWithResponses) GetSessionWithResponse(ctx context.Context, id str
 	return ParseGetSessionResponse(rsp)
 }
 
-// PostShareWithBodyWithResponse request with arbitrary body returning *PostShareResponse
-func (c *ClientWithResponses) PostShareWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader) (*PostShareResponse, error) {
-	rsp, err := c.PostShareWithBody(ctx, id, contentType, body)
+// PostTocWithBodyWithResponse request with arbitrary body returning *PostTocResponse
+func (c *ClientWithResponses) PostTocWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader) (*PostTocResponse, error) {
+	rsp, err := c.PostTocWithBody(ctx, id, contentType, body)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePostShareResponse(rsp)
+	return ParsePostTocResponse(rsp)
 }
 
-func (c *ClientWithResponses) PostShareWithResponse(ctx context.Context, id string, body PostShareJSONRequestBody) (*PostShareResponse, error) {
-	rsp, err := c.PostShare(ctx, id, body)
+func (c *ClientWithResponses) PostTocWithResponse(ctx context.Context, id string, body PostTocJSONRequestBody) (*PostTocResponse, error) {
+	rsp, err := c.PostToc(ctx, id, body)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePostShareResponse(rsp)
+	return ParsePostTocResponse(rsp)
 }
 
 // GenerateTotpWithBodyWithResponse request with arbitrary body returning *GenerateTotpResponse
@@ -824,23 +707,6 @@ func (c *ClientWithResponses) GenerateTotpWithResponse(ctx context.Context, id s
 	return ParseGenerateTotpResponse(rsp)
 }
 
-// CreateSharesWithBodyWithResponse request with arbitrary body returning *CreateSharesResponse
-func (c *ClientWithResponses) CreateSharesWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*CreateSharesResponse, error) {
-	rsp, err := c.CreateSharesWithBody(ctx, contentType, body)
-	if err != nil {
-		return nil, err
-	}
-	return ParseCreateSharesResponse(rsp)
-}
-
-func (c *ClientWithResponses) CreateSharesWithResponse(ctx context.Context, body CreateSharesJSONRequestBody) (*CreateSharesResponse, error) {
-	rsp, err := c.CreateShares(ctx, body)
-	if err != nil {
-		return nil, err
-	}
-	return ParseCreateSharesResponse(rsp)
-}
-
 // ParseCreateSessionResponse parses an HTTP response from a CreateSessionWithResponse call
 func ParseCreateSessionResponse(rsp *http.Response) (*CreateSessionResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
@@ -856,11 +722,18 @@ func ParseCreateSessionResponse(rsp *http.Response) (*CreateSessionResponse, err
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest PrivateSession
+		var dest SessionCredentials
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
 
 	}
 
@@ -888,25 +761,39 @@ func ParseGetSessionResponse(rsp *http.Response) (*GetSessionResponse, error) {
 		}
 		response.JSON200 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
 	}
 
 	return response, nil
 }
 
-// ParsePostShareResponse parses an HTTP response from a PostShareWithResponse call
-func ParsePostShareResponse(rsp *http.Response) (*PostShareResponse, error) {
+// ParsePostTocResponse parses an HTTP response from a PostTocWithResponse call
+func ParsePostTocResponse(rsp *http.Response) (*PostTocResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &PostShareResponse{
+	response := &PostTocResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
 	}
 
 	return response, nil
@@ -927,33 +814,7 @@ func ParseGenerateTotpResponse(rsp *http.Response) (*GenerateTotpResponse, error
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest TOTPCode
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseCreateSharesResponse parses an HTTP response from a CreateSharesWithResponse call
-func ParseCreateSharesResponse(rsp *http.Response) (*CreateSharesResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &CreateSharesResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest TOTPShares
+		var dest OracleResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -973,21 +834,18 @@ func ParseCreateSharesResponse(rsp *http.Response) (*CreateSharesResponse, error
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// Start a new authentication session
+	// Start a new session
 	// (POST /sessions)
 	CreateSession(ctx echo.Context) error
-
+	// Retrieve a session details by its ID
 	// (GET /sessions/{id})
 	GetSession(ctx echo.Context, id string) error
-
-	// (POST /sessions/{id}/shares)
-	PostShare(ctx echo.Context, id string) error
-
+	// Join a new Toc to an existing session
+	// (POST /sessions/{id}/tocs)
+	PostToc(ctx echo.Context, id string) error
+	// Close the session and generate the TOTP
 	// (POST /sessions/{id}/totp)
 	GenerateTotp(ctx echo.Context, id string) error
-	// Split a TOTP secret key
-	// (POST /shares)
-	CreateShares(ctx echo.Context) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -1020,8 +878,8 @@ func (w *ServerInterfaceWrapper) GetSession(ctx echo.Context) error {
 	return err
 }
 
-// PostShare converts echo context to params.
-func (w *ServerInterfaceWrapper) PostShare(ctx echo.Context) error {
+// PostToc converts echo context to params.
+func (w *ServerInterfaceWrapper) PostToc(ctx echo.Context) error {
 	var err error
 	// ------------- Path parameter "id" -------------
 	var id string
@@ -1032,7 +890,7 @@ func (w *ServerInterfaceWrapper) PostShare(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.PostShare(ctx, id)
+	err = w.Handler.PostToc(ctx, id)
 	return err
 }
 
@@ -1049,15 +907,6 @@ func (w *ServerInterfaceWrapper) GenerateTotp(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GenerateTotp(ctx, id)
-	return err
-}
-
-// CreateShares converts echo context to params.
-func (w *ServerInterfaceWrapper) CreateShares(ctx echo.Context) error {
-	var err error
-
-	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.CreateShares(ctx)
 	return err
 }
 
@@ -1078,52 +927,59 @@ type EchoRouter interface {
 
 // RegisterHandlers adds each server route to the EchoRouter.
 func RegisterHandlers(router EchoRouter, si ServerInterface) {
+	RegisterHandlersWithBaseURL(router, si, "")
+}
+
+// Registers handlers, and prepends BaseURL to the paths, so that the paths
+// can be served under a prefix.
+func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL string) {
 
 	wrapper := ServerInterfaceWrapper{
 		Handler: si,
 	}
 
-	router.POST("/sessions", wrapper.CreateSession)
-	router.GET("/sessions/:id", wrapper.GetSession)
-	router.POST("/sessions/:id/shares", wrapper.PostShare)
-	router.POST("/sessions/:id/totp", wrapper.GenerateTotp)
-	router.POST("/shares", wrapper.CreateShares)
+	router.POST(baseURL+"/sessions", wrapper.CreateSession)
+	router.GET(baseURL+"/sessions/:id", wrapper.GetSession)
+	router.POST(baseURL+"/sessions/:id/tocs", wrapper.PostToc)
+	router.POST(baseURL+"/sessions/:id/totp", wrapper.GenerateTotp)
 
 }
 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
-	"/24gLALQGAAA",
+	"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",
+	"AA==",
 }
 
 // GetSwagger returns the Swagger specification corresponding to the generated code
