@@ -123,3 +123,5 @@ modules.xml
 .history
 
 # End of https://www.gitignore.io/api/go,intellij+all,visualstudiocode
+
+dist/
