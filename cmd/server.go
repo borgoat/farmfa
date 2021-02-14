@@ -5,7 +5,7 @@ import (
 	"github.com/deepmap/oapi-codegen/pkg/middleware"
 	"github.com/giorgioazzinnaro/farmfa/api"
 	"github.com/giorgioazzinnaro/farmfa/server"
-	"github.com/giorgioazzinnaro/farmfa/sessions"
+	"github.com/giorgioazzinnaro/farmfa/session"
 	"github.com/labstack/echo/v4"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -22,9 +22,10 @@ func serverCmd(v *viper.Viper) *cobra.Command {
 		}
 		e.Use(middleware.OapiRequestValidator(apiObj))
 
-		sessionManager := sessions.NewInMemory()
+		store := session.NewInMemoryStore()
+		oracle := session.NewOracle(store)
 
-		s := server.New(sessionManager)
+		s := server.New(oracle)
 
 		api.RegisterHandlers(e, s)
 

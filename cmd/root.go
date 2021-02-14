@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"github.com/giorgioazzinnaro/farmfa/api"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -20,16 +19,7 @@ func rootCmd() *cobra.Command {
 
 	_ = v.ReadInConfig()
 
-	defaultClient, err := api.NewClient(v.GetString("address"))
-	if err != nil {
-		panic(err)
-	}
-
 	c.AddCommand(
-		playerCmd(defaultClient),
-		dealerCmd(defaultClient),
-		sharesCmd(v, defaultClient),
-
 		serverCmd(v),
 	)
 
