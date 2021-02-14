@@ -2,104 +2,102 @@ package server
 
 import (
 	"fmt"
-	"github.com/giorgioazzinnaro/farmfa/ptr"
-	"github.com/giorgioazzinnaro/farmfa/sessions"
-	"github.com/giorgioazzinnaro/farmfa/shares"
-	"net/http"
-
 	"github.com/giorgioazzinnaro/farmfa/api"
 	"github.com/labstack/echo/v4"
+	"net/http"
 )
 
-func (s Server) CreateSession(ctx echo.Context) error {
+func (s *Server) CreateSession(ctx echo.Context) error {
 	var (
 		req  api.CreateSessionJSONRequestBody
-		resp api.PrivateSession
+		resp *api.SessionCredentials
+		err  error
 	)
 
-	// Parse the request body into req
 	if err := ctx.Bind(&req); err != nil {
-		return err
+		// TODO Better error handling
+		return ctx.JSON(http.StatusBadRequest, api.DefaultError{})
 	}
 
-	firstToken, err := shares.Parse(req.FirstShare)
+	resp, err = s.sm.CreateSession(&req.TocZero)
 	if err != nil {
-		// TODO HTTP error
-		return fmt.Errorf("the provide first share is invalid: %w", err)
+		// TODO Better error handling
+		return ctx.JSON(http.StatusInternalServerError, api.DefaultError{})
 	}
 
-	session, err := s.sm.Start(firstToken)
-	if err != nil {
-		// TODO HTTP error
-		return err
-	}
-
-	resp = *session
 	return ctx.JSON(http.StatusOK, resp)
 }
 
-func (s Server) GetSession(ctx echo.Context, id string) error {
-	var resp api.Session
-
-	session, err := s.sm.Status(sessions.SessionIdentifier(id))
-	if err != nil {
-		return ctx.String(http.StatusNotFound, "session id does not exist")
-	}
-
-	resp = *session
-	return ctx.JSON(http.StatusOK, resp)
-}
-
-func (s Server) PostShare(ctx echo.Context, id string) error {
+func (s *Server) GetSession(ctx echo.Context, id string) error {
 	var (
-		req  api.PostShareJSONRequestBody
-		resp api.Session
+		resp *api.Session
+		err  error
 	)
 
-	// Parse the request body into req
-	if err := ctx.Bind(&req); err != nil {
-		return err
-	}
-
-	token, err := shares.Parse(req.Share)
+	resp, err = s.sm.GetSession(id)
 	if err != nil {
-		// TODO HTTP error handling
-		return fmt.Errorf("provided token is invalid: %w", err)
+		// TODO Better error handling
+		return ctx.JSON(http.StatusInternalServerError, api.DefaultError{})
 	}
 
-	err = s.sm.AddShare(sessions.SessionIdentifier(id), token)
-	if err != nil {
-		// TODO HTTP error handling
-		return fmt.Errorf("failed to add share: %w", err)
-	}
-
-	session, err := s.sm.Status(sessions.SessionIdentifier(id))
-	if err != nil {
-		return ctx.String(http.StatusNotFound, "session id does not exist")
-	}
-
-	resp = *session
 	return ctx.JSON(http.StatusOK, resp)
 }
 
-func (s Server) GenerateTotp(ctx echo.Context, id string) error {
+func (s *Server) PostToc(ctx echo.Context, id string) error {
+	var (
+		req api.PostTocJSONRequestBody
+		err error
+	)
+
+	if err := ctx.Bind(&req); err != nil {
+		// TODO Better error handling
+		return ctx.JSON(http.StatusBadRequest, api.DefaultError{})
+	}
+
+	err = s.sm.AddToc(id, req.EncryptedToc)
+	if err != nil {
+		// TODO Better error handling
+		return ctx.JSON(http.StatusInternalServerError, api.DefaultError{})
+	}
+
+	return ctx.NoContent(http.StatusOK)
+}
+
+func (s *Server) GenerateTotp(ctx echo.Context, id string) error {
 	var (
 		req  api.GenerateTotpJSONRequestBody
 		resp api.TOTPCode
+		err  error
 	)
 
-	// Parse the request body into req
-	if err := ctx.Bind(&req); err != nil {
-		return err
+	if err = ctx.Bind(&req); err != nil {
+		// TODO Better error handling
+		return ctx.JSON(http.StatusBadRequest, api.DefaultError{})
 	}
 
-	totp, err := s.sm.GenerateTOTP(sessions.SessionIdentifier(id))
+	sess, err := s.sm.GetSession(id)
 	if err != nil {
-		// TODO HTTP error
-		return fmt.Errorf("failed to generate TOTP: %w", err)
+		// TODO Better error handling
+		// most likely the ID is invalid
+		return ctx.JSON(http.StatusBadRequest, api.DefaultError{})
 	}
 
-	resp.Totp = ptr.String(string(totp))
+	if sess.Status == "pending" {
+		return ctx.JSON(http.StatusOK, sess)
+	}
+
+	kek := api.SessionKeyEncryptionKey(req)
+	totp, err := s.sm.DecryptTocs(id, &kek)
+	if err != nil {
+		// TODO Better error handling
+		return ctx.JSON(http.StatusInternalServerError, api.DefaultError{})
+	}
+
+	// TODO Join tocs and generate totp
+	fmt.Print(totp)
+
+	resp.Status = "complete"
+	resp.Totp = ""
 
 	return ctx.JSON(http.StatusOK, resp)
 }

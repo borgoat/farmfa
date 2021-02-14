@@ -2,16 +2,16 @@ package server
 
 import (
 	"github.com/giorgioazzinnaro/farmfa/api"
-	"github.com/giorgioazzinnaro/farmfa/sessions"
+	"github.com/giorgioazzinnaro/farmfa/session"
 )
 
 type Server struct {
-	sm sessions.SessionManager
+	sm session.Store
 }
 
 var _ api.ServerInterface = (*Server)(nil)
 
-func New(sm sessions.SessionManager) *Server {
+func New(sm session.Store) *Server {
 	return &Server{
 		sm: sm,
 	}
