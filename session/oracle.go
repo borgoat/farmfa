@@ -12,8 +12,10 @@ import (
 	"time"
 
 	"filippo.io/age"
+	"github.com/SSSaaS/sssa-golang"
 	"github.com/giorgioazzinnaro/farmfa/api"
 	"github.com/giorgioazzinnaro/farmfa/random"
+	"github.com/pquerna/otp/totp"
 )
 
 type Oracle struct {
@@ -159,7 +161,31 @@ func isValidAgeArmoredString(armored string) bool {
 	return true
 }
 
-func (o *Oracle) DecryptTocs(id string, key *api.SessionKeyEncryptionKey) ([]api.Toc, error) {
+func (o *Oracle) GenerateTOTP(id string, key *api.SessionKeyEncryptionKey) (string, error) {
+	tocs, err := o.decryptTocs(id, key)
+	if err != nil {
+		return "", fmt.Errorf("failed to retrieve tocs")
+	}
+
+	shares := make([]string, len(tocs))
+	for i := range tocs {
+		shares[i] = tocs[i].Share
+	}
+
+	totpSecret, err := sssa.Combine(shares)
+	if err != nil {
+		return "", fmt.Errorf("failed to reconstruct TOTP secret: %w", err)
+	}
+
+	otp, err := totp.GenerateCode(totpSecret, time.Now())
+	if err != nil {
+		return "", fmt.Errorf("failed to generate TOTP: %w", err)
+	}
+
+	return otp, nil
+}
+
+func (o *Oracle) decryptTocs(id string, key *api.SessionKeyEncryptionKey) ([]api.Toc, error) {
 	// TODO Ensure there's enough Tocs
 
 	encTEK, err := o.store.GetTEK(id)
