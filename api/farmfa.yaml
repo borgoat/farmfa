@@ -160,6 +160,7 @@ components:
       properties:
         kek:
           type: string
+          format: byte
           description: >
             A key used to encrypt the Toc encryption key held by the oracle.
             This key is kept by the applicant and shared when a TOTP is generated.
@@ -209,9 +210,7 @@ components:
       required:
         - id
         - toc_group_id
-        - expires_at
         - created_at
-        - ttl
         - complete
         - tocs_in_group
         - tocs_threshold
@@ -252,6 +251,12 @@ components:
           type: string
           format: bytes
           description: The actual share that players should keep secret
+      required:
+        - toc_id
+        - group_id
+        - group_size
+        - group_threshold
+        - share
 
     TOTPCode:
       type: object
@@ -286,7 +291,7 @@ components:
       discriminator:
         propertyName: status
         mapping:
-          processing: '#/components/schemas/Session'
+          pending: '#/components/schemas/Session'
           complete: '#/components/schemas/TOTPCode'
 
 # All errors
