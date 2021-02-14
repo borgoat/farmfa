@@ -25,8 +25,8 @@ import (
 // AddToc defines model for AddToc.
 type AddToc struct {
 
-	// A Toc is a "piece" in which a TOTP secret gets split.
-	Toc *Toc `json:"toc,omitempty"`
+	// The constituent's Toc encrypted with the session's public key
+	EncryptedToc string `json:"encrypted_toc"`
 }
 
 // Error defines model for Error.
@@ -38,8 +38,8 @@ type Error struct {
 // NewSession defines model for NewSession.
 type NewSession struct {
 
-	// A first Toc owned by the applicant
-	TocZero string `json:"toc_zero"`
+	// A Toc is a "piece" in which a TOTP secret gets split.
+	TocZero Toc `json:"toc_zero"`
 
 	// Seconds until the TOTP generation endpoint expires, starting from the first TOTP generated.
 	Ttl *int `json:"ttl,omitempty"`
@@ -52,68 +52,74 @@ type OracleResponse interface{}
 type Session struct {
 
 	// True when enough Tocs have been provided and TOTPs may be generated
-	Complete *bool `json:"complete,omitempty"`
+	Complete bool `json:"complete"`
 
 	// The time when the session started
-	CreatedAt *time.Time `json:"created_at,omitempty"`
+	CreatedAt time.Time `json:"created_at"`
 
 	// When the sessions will expire and no longer accept Tocs
-	ExpiresAt *time.Time `json:"expires_at,omitempty"`
+	ExpiresAt time.Time `json:"expires_at"`
 
 	// The identifier of a session
-	Id *string `json:"id,omitempty"`
+	Id string `json:"id"`
+
+	// This is needed to discriminate the TOTP from the session
+	Status string `json:"status"`
 
 	// An identifier for the group of Tocs used in this session
-	TocGroupId *string `json:"toc_group_id,omitempty"`
+	TocGroupId string `json:"toc_group_id"`
 
 	// The total number of Tocs in the group
-	TocsInGroup *int `json:"tocs_in_group,omitempty"`
+	TocsInGroup int `json:"tocs_in_group"`
 
 	// The number of Tocs already provided by consituents to the oracle for this session
-	TocsProvided *int `json:"tocs_provided,omitempty"`
+	TocsProvided int `json:"tocs_provided"`
 
 	// The minimum number of Tocs required
-	TocsThreshold *int `json:"tocs_threshold,omitempty"`
+	TocsThreshold int `json:"tocs_threshold"`
 
 	// Seconds until the TOTP generation endpoint expires, starting from the first token generated.
-	Ttl *int `json:"ttl,omitempty"`
+	Ttl int `json:"ttl"`
 }
 
 // SessionCredentials defines model for SessionCredentials.
 type SessionCredentials struct {
 	// Embedded struct due to allOf(#/components/schemas/Session)
 	Session `yaml:",inline"`
-	// Embedded struct due to allOf(#/components/schemas/SessionPublicKey)
-	SessionPublicKey `yaml:",inline"`
-	// Embedded struct due to allOf(#/components/schemas/SessionPrivateKey)
-	SessionPrivateKey `yaml:",inline"`
+	// Embedded struct due to allOf(#/components/schemas/SessionTocEncryptionKey)
+	SessionTocEncryptionKey `yaml:",inline"`
+	// Embedded struct due to allOf(#/components/schemas/SessionKeyEncryptionKey)
+	SessionKeyEncryptionKey `yaml:",inline"`
 }
 
-// SessionPrivateKey defines model for SessionPrivateKey.
-type SessionPrivateKey struct {
+// SessionKeyEncryptionKey defines model for SessionKeyEncryptionKey.
+type SessionKeyEncryptionKey struct {
 
-	// A part of a private key (the other half is kept by the oracle) used to decrypt Tocs given by constituents. This part of private key must be kept by the applicant, so that it may be given to the oracle, when requesting a TOTP to be generated.
-	PrivateKey *string `json:"private_key,omitempty"`
+	// A key used to encrypt the Toc encryption key held by the oracle. This key is kept by the applicant and shared when a TOTP is generated.
+	Kek string `json:"kek"`
 }
 
-// SessionPublicKey defines model for SessionPublicKey.
-type SessionPublicKey struct {
+// SessionTocEncryptionKey defines model for SessionTocEncryptionKey.
+type SessionTocEncryptionKey struct {
 
 	// A public key used by constituents to encrypt their Tocs before sharing them with the oracle. The applicant receives it when creating a sessions, and must share it with constituents when requesting their approval.
-	PublicKey *string `json:"public_key,omitempty"`
+	Tek string `json:"tek"`
 }
 
 // TOTPCode defines model for TOTPCode.
 type TOTPCode struct {
 
 	// The time when this session will expire and cannot be called again
-	SessionExpiresAt *time.Time `json:"session_expires_at,omitempty"`
+	SessionExpiresAt time.Time `json:"session_expires_at"`
+
+	// This is needed to discriminate the TOTP from the session
+	Status string `json:"status"`
 
 	// The current TOTP
-	Totp *string `json:"totp,omitempty"`
+	Totp string `json:"totp"`
 
 	// The time when the current TOTP will expire
-	TotpExpiresAt *time.Time `json:"totp_expires_at,omitempty"`
+	TotpExpiresAt time.Time `json:"totp_expires_at"`
 }
 
 // Toc defines model for Toc.
@@ -148,7 +154,7 @@ type CreateSessionJSONBody NewSession
 type PostTocJSONBody AddToc
 
 // GenerateTotpJSONBody defines parameters for GenerateTotp.
-type GenerateTotpJSONBody SessionPrivateKey
+type GenerateTotpJSONBody SessionKeyEncryptionKey
 
 // CreateSessionJSONRequestBody defines body for CreateSession for application/json ContentType.
 type CreateSessionJSONRequestBody CreateSessionJSONBody
@@ -951,38 +957,39 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
+	"8u3t9r8BAAD//0y42qbiGwAA",
 }
 
 // GetSwagger returns the Swagger specification corresponding to the generated code

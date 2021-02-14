@@ -106,7 +106,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SessionPrivateKey'
+              $ref: '#/components/schemas/SessionKeyEncryptionKey'
       responses:
         default:
           $ref: '#/components/responses/DefaultError'
@@ -123,8 +123,7 @@ components:
       type: object
       properties:
         toc_zero:
-          type: string
-          description: A first Toc owned by the applicant
+          $ref: '#/components/schemas/Toc'
         ttl:
           type: integer
           minimum: 60
@@ -141,28 +140,31 @@ components:
         This object should be kept secret by the applicant, and used when generating the TOTP.
       allOf:
         - $ref: '#/components/schemas/Session'
-        - $ref: '#/components/schemas/SessionPublicKey'
-        - $ref: '#/components/schemas/SessionPrivateKey'
+        - $ref: '#/components/schemas/SessionTocEncryptionKey'
+        - $ref: '#/components/schemas/SessionKeyEncryptionKey'
 
-    SessionPublicKey:
+    SessionTocEncryptionKey:
       type: object
       properties:
-        public_key:
+        tek:
           type: string
           description: >
             A public key used by constituents to encrypt their Tocs before sharing them with the oracle.
             The applicant receives it when creating a sessions,
             and must share it with constituents when requesting their approval.
+      required:
+        - tek
 
-    SessionPrivateKey:
+    SessionKeyEncryptionKey:
       type: object
       properties:
-        private_key:
+        kek:
           type: string
           description: >
-            A part of a private key (the other half is kept by the oracle) used to decrypt Tocs given by constituents.
-            This part of private key must be kept by the applicant, so that it may be given to the oracle,
-            when requesting a TOTP to be generated.
+            A key used to encrypt the Toc encryption key held by the oracle.
+            This key is kept by the applicant and shared when a TOTP is generated.
+      required:
+        - kek
 
     Session:
       type: object
@@ -201,12 +203,29 @@ components:
           type: integer
           minimum: 1
           description: The number of Tocs already provided by consituents to the oracle for this session
+        status:
+          type: string
+          description: This is needed to discriminate the TOTP from the session
+      required:
+        - id
+        - toc_group_id
+        - expires_at
+        - created_at
+        - ttl
+        - complete
+        - tocs_in_group
+        - tocs_threshold
+        - tocs_provided
+        - status
 
     AddToc:
       type: object
       properties:
-        toc:
-          $ref: '#/components/schemas/Toc'
+        encrypted_toc:
+          type: string
+          description: The constituent's Toc encrypted with the session's public key
+      required:
+        - encrypted_toc
 
     Toc:
       description: A Toc is a "piece" in which a TOTP secret gets split.
@@ -249,6 +268,14 @@ components:
           type: string
           format: date-time
           description: The time when this session will expire and cannot be called again
+        status:
+          type: string
+          description: This is needed to discriminate the TOTP from the session
+      required:
+        - totp
+        - totp_expires_at
+        - session_expires_at
+        - status
 
     OracleResponse:
       description: >
