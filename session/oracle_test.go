@@ -11,8 +11,8 @@ import (
 	"testing"
 )
 
-func TestInMemory_CreateSession(t *testing.T) {
-	m := session.NewInMemory()
+func TestOracle_CreateSession(t *testing.T) {
+	m := session.NewOracle(session.NewInMemoryStore())
 	creds, err := m.CreateSession(&api.Toc{
 		GroupId:        "GIWYCRKS",
 		GroupSize:      20,
@@ -29,8 +29,8 @@ func TestInMemory_CreateSession(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestInMemory_AddToc_valid(t *testing.T) {
-	m := session.NewInMemory()
+func TestOracle_AddToc_valid(t *testing.T) {
+	m := session.NewOracle(session.NewInMemoryStore())
 	creds, err := m.CreateSession(&api.Toc{
 		GroupId:        "4TRP4K4R",
 		GroupSize:      20,
@@ -45,8 +45,8 @@ func TestInMemory_AddToc_valid(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestInMemory_AddToc_empty(t *testing.T) {
-	m := session.NewInMemory()
+func TestOracle_AddToc_empty(t *testing.T) {
+	m := session.NewOracle(session.NewInMemoryStore())
 	creds, err := m.CreateSession(&api.Toc{
 		GroupId:        "GIWYCRKS",
 		GroupSize:      20,
@@ -61,8 +61,8 @@ func TestInMemory_AddToc_empty(t *testing.T) {
 	assert.ErrorIs(t, err, session.ErrEmptyToc)
 }
 
-func TestInMemory_AddToc_notEncrypted(t *testing.T) {
-	m := session.NewInMemory()
+func TestOracle_AddToc_notEncrypted(t *testing.T) {
+	m := session.NewOracle(session.NewInMemoryStore())
 	creds, err := m.CreateSession(&api.Toc{
 		GroupId:        "GIWYCRKS",
 		GroupSize:      20,
@@ -77,8 +77,8 @@ func TestInMemory_AddToc_notEncrypted(t *testing.T) {
 	assert.ErrorIs(t, err, session.ErrTocIsNotEncrypted)
 }
 
-func TestInMemory_AddToc_alreadyExists(t *testing.T) {
-	m := session.NewInMemory()
+func TestOracle_AddToc_alreadyExists(t *testing.T) {
+	m := session.NewOracle(session.NewInMemoryStore())
 	creds, err := m.CreateSession(&api.Toc{
 		GroupId:        "GIWYCRKS",
 		GroupSize:      20,
@@ -96,8 +96,8 @@ func TestInMemory_AddToc_alreadyExists(t *testing.T) {
 	assert.ErrorIs(t, err, session.ErrTocAlreadyExists)
 }
 
-func TestInMemory_DecryptTocs(t *testing.T) {
-	m := session.NewInMemory()
+func TestOracle_DecryptTocs(t *testing.T) {
+	m := session.NewOracle(session.NewInMemoryStore())
 	creds, err := m.CreateSession(&api.Toc{
 		GroupId:        "J7UHQPZK",
 		GroupSize:      5,

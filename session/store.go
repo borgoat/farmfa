@@ -1,11 +1,34 @@
 package session
 
-import "github.com/giorgioazzinnaro/farmfa/api"
+import (
+	"errors"
+
+	"github.com/giorgioazzinnaro/farmfa/api"
+)
 
 // Store is used to keep track of Sessions, and their Tocs
+// ErrSessionNotFound may be returned by any method where a session is referenced by ID
 type Store interface {
-	CreateSession(tocZero *api.Toc) (*api.SessionCredentials, error)
+	// CreateSession is used to persist a new session.
+	// It may return ErrSessionAlreadyExists if the ID in session has been already used
+	CreateSession(session *api.Session, encryptedTEK []byte, encryptedTocZero string) error
+
+	// GetSession retrieves a session by its ID.
+	// ErrSessionNotFound may be returned if the provided ID does not exist.
 	GetSession(id string) (*api.Session, error)
-	AddToc(id string, encryptedToc string) error
-	DecryptTocs(id string, key *api.SessionKeyEncryptionKey) ([]api.Toc, error)
+
+	// AddEncryptedToc is used to append a Toc to an existing session.
+	// It may return ErrTocAlreadyExists if the provided value has already been seen
+	// ErrSessionNotFound may also be returned.
+	AddEncryptedToc(id string, encryptedToc string) error
+
+	// GetEncryptedTocs returns a slice of strings with the encrypted Tocs
+	GetEncryptedTocs(id string) ([]string, error)
+
+	// GetTEK is used to retrieve the Toc encryption key
+	GetTEK(id string) ([]byte, error)
 }
+
+var ErrSessionNotFound = errors.New("session not found")
+var ErrSessionAlreadyExists = errors.New("a session with the requested ID already exists")
+var ErrTocAlreadyExists = errors.New("the provided Toc already exists")
