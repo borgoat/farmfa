@@ -48,18 +48,18 @@ func CreateTocs(note, secret string, players []*Player, threshold int) (map[stri
 
 	for i, p := range players {
 
-		tocID, err := random.String(3)
+		tocID, err := random.String(5)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate Toc ID: %w", err)
 		}
 
 		toc := &api.Toc{
-			GroupId:        ptr.String(groupID),
-			GroupSize:      ptr.Int(groupSize),
-			GroupThreshold: ptr.Int(threshold),
+			GroupId:        groupID,
+			GroupSize:      groupSize,
+			GroupThreshold: threshold,
 			Note:           ptr.String(note),
-			TocId:          ptr.String(tocID),
-			Share:          ptr.String(shares[i]),
+			TocId:          tocID,
+			Share:          shares[i],
 		}
 
 		enc, err := p.EncryptToc(toc)
