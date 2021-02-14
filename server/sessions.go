@@ -2,9 +2,10 @@ package server
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/giorgioazzinnaro/farmfa/api"
 	"github.com/labstack/echo/v4"
-	"net/http"
 )
 
 func (s *Server) CreateSession(ctx echo.Context) error {
@@ -19,7 +20,7 @@ func (s *Server) CreateSession(ctx echo.Context) error {
 		return ctx.JSON(http.StatusBadRequest, api.DefaultError{})
 	}
 
-	resp, err = s.sm.CreateSession(&req.TocZero)
+	resp, err = s.oracle.CreateSession(&req.TocZero)
 	if err != nil {
 		// TODO Better error handling
 		return ctx.JSON(http.StatusInternalServerError, api.DefaultError{})
@@ -34,7 +35,7 @@ func (s *Server) GetSession(ctx echo.Context, id string) error {
 		err  error
 	)
 
-	resp, err = s.sm.GetSession(id)
+	resp, err = s.oracle.GetSession(id)
 	if err != nil {
 		// TODO Better error handling
 		return ctx.JSON(http.StatusInternalServerError, api.DefaultError{})
@@ -54,7 +55,7 @@ func (s *Server) PostToc(ctx echo.Context, id string) error {
 		return ctx.JSON(http.StatusBadRequest, api.DefaultError{})
 	}
 
-	err = s.sm.AddToc(id, req.EncryptedToc)
+	err = s.oracle.AddToc(id, req.EncryptedToc)
 	if err != nil {
 		// TODO Better error handling
 		return ctx.JSON(http.StatusInternalServerError, api.DefaultError{})
@@ -75,7 +76,7 @@ func (s *Server) GenerateTotp(ctx echo.Context, id string) error {
 		return ctx.JSON(http.StatusBadRequest, api.DefaultError{})
 	}
 
-	sess, err := s.sm.GetSession(id)
+	sess, err := s.oracle.GetSession(id)
 	if err != nil {
 		// TODO Better error handling
 		// most likely the ID is invalid
@@ -87,7 +88,7 @@ func (s *Server) GenerateTotp(ctx echo.Context, id string) error {
 	}
 
 	kek := api.SessionKeyEncryptionKey(req)
-	totp, err := s.sm.DecryptTocs(id, &kek)
+	totp, err := s.oracle.GenerateTOTP(id, &kek)
 	if err != nil {
 		// TODO Better error handling
 		return ctx.JSON(http.StatusInternalServerError, api.DefaultError{})

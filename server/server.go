@@ -6,13 +6,13 @@ import (
 )
 
 type Server struct {
-	sm session.Store
+	oracle *session.Oracle
 }
 
 var _ api.ServerInterface = (*Server)(nil)
 
-func New(sm session.Store) *Server {
+func New(oracle *session.Oracle) *Server {
 	return &Server{
-		sm: sm,
+		oracle: oracle,
 	}
 }
