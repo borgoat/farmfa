@@ -249,7 +249,6 @@ components:
           description: Free-text to describe the purpose of a Toc
         share:
           type: string
-          format: bytes
           description: The actual share that players should keep secret
       required:
         - toc_id
