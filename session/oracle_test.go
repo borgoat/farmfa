@@ -2,7 +2,7 @@ package session_test
 
 import (
 	"bytes"
-	"io"
+	"encoding/json"
 	"regexp"
 	"testing"
 
@@ -117,8 +117,16 @@ func TestOracle_GenerateTOTP(t *testing.T) {
 	aw := armor.NewWriter(&out)
 	w, err := age.Encrypt(aw, tek)
 	assert.NoError(t, err)
+	jEnc := json.NewEncoder(w)
 
-	_, err = io.WriteString(w, `{"group_id":"J7UHQPZK","group_size":5,"group_threshold":2,"note":"test_basic","share":"zxRrozuUaCMgn_u6ajZStlV7RKwhp0keT9aQoXAEruI=nfx2CPJfKiFM32zLmtxHjV94OlZOgBevV1Whrx-lslU=","toc_id":"K5FSSJSV"}`)
+	err = jEnc.Encode(&api.Toc{
+		GroupId:        "J7UHQPZK",
+		GroupSize:      5,
+		GroupThreshold: 2,
+		Note:           nil,
+		Share:          "zxRrozuUaCMgn_u6ajZStlV7RKwhp0keT9aQoXAEruI=nfx2CPJfKiFM32zLmtxHjV94OlZOgBevV1Whrx-lslU=",
+		TocId:          "K5FSSJSV",
+	})
 	assert.NoError(t, err)
 
 	assert.NoError(t, w.Close())
