@@ -37,8 +37,11 @@ func serverCmd(v *viper.Viper) *cobra.Command {
 
 	c := &cobra.Command{
 		Use:     "server",
-		Aliases: []string{"serve", "s"},
-		Short:   "Start the server",
+		Aliases: []string{"serve", "s", "oracle"},
+		Short:   "Start the server acting as the farMFA oracle",
+
+		Long: `The oracle is the entity that reconstructs Tocs into TOTP secrets, and generates one-time passwords.
+Also called the prover, as defined in [RFC6238].`,
 
 		RunE: run,
 	}
