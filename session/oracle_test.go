@@ -96,7 +96,7 @@ func TestOracle_AddToc_alreadyExists(t *testing.T) {
 	assert.ErrorIs(t, err, session.ErrTocAlreadyExists)
 }
 
-func TestOracle_DecryptTocs(t *testing.T) {
+func TestOracle_GenerateTOTP(t *testing.T) {
 	m := session.NewOracle(session.NewInMemoryStore())
 	creds, err := m.CreateSession(&api.Toc{
 		GroupId:        "J7UHQPZK",
@@ -124,7 +124,7 @@ func TestOracle_DecryptTocs(t *testing.T) {
 
 	err = m.AddToc(creds.Id, out.String())
 
-	tocs, err := m.DecryptTocs(creds.Id, &creds.SessionKeyEncryptionKey)
+	totp, err := m.GenerateTOTP(creds.Id, &creds.SessionKeyEncryptionKey)
 	assert.NoError(t, err)
-	assert.Len(t, tocs, 2)
+	assert.Regexp(t, regexp.MustCompile(`^\d{6}$`), totp)
 }
