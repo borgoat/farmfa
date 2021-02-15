@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/giorgioazzinnaro/farmfa/api"
@@ -76,16 +75,16 @@ func (s *Server) GenerateTotp(ctx echo.Context, id string) error {
 		return ctx.JSON(http.StatusBadRequest, api.DefaultError{})
 	}
 
-	sess, err := s.oracle.GetSession(id)
-	if err != nil {
-		// TODO Better error handling
-		// most likely the ID is invalid
-		return ctx.JSON(http.StatusBadRequest, api.DefaultError{})
-	}
-
-	if sess.Status == "pending" {
-		return ctx.JSON(http.StatusOK, sess)
-	}
+	//sess, err := s.oracle.GetSession(id)
+	//if err != nil {
+	//	// TODO Better error handling
+	//	// most likely the ID is invalid
+	//	return ctx.JSON(http.StatusBadRequest, api.DefaultError{})
+	//}
+	//
+	//if sess.Status == "pending" {
+	//	return ctx.JSON(http.StatusOK, sess)
+	//}
 
 	kek := api.SessionKeyEncryptionKey(req)
 	totp, err := s.oracle.GenerateTOTP(id, &kek)
@@ -94,11 +93,8 @@ func (s *Server) GenerateTotp(ctx echo.Context, id string) error {
 		return ctx.JSON(http.StatusInternalServerError, api.DefaultError{})
 	}
 
-	// TODO Join tocs and generate totp
-	fmt.Print(totp)
-
 	resp.Status = "complete"
-	resp.Totp = ""
+	resp.Totp = totp
 
 	return ctx.JSON(http.StatusOK, resp)
 }
