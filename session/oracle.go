@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"filippo.io/age/armor"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -12,6 +11,7 @@ import (
 	"time"
 
 	"filippo.io/age"
+	"filippo.io/age/armor"
 	"github.com/SSSaaS/sssa-golang"
 	"github.com/giorgioazzinnaro/farmfa/api"
 	"github.com/giorgioazzinnaro/farmfa/random"

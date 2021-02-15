@@ -2,13 +2,15 @@ package session_test
 
 import (
 	"bytes"
+	"io"
+	"regexp"
+	"testing"
+
 	"filippo.io/age"
 	"filippo.io/age/armor"
 	"github.com/giorgioazzinnaro/farmfa/api"
 	"github.com/giorgioazzinnaro/farmfa/session"
 	"github.com/stretchr/testify/assert"
-	"io"
-	"testing"
 )
 
 func TestOracle_CreateSession(t *testing.T) {

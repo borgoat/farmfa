@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+
 	"github.com/deepmap/oapi-codegen/pkg/middleware"
 	"github.com/giorgioazzinnaro/farmfa/api"
 	"github.com/giorgioazzinnaro/farmfa/server"
