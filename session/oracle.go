@@ -36,7 +36,6 @@ func (o *Oracle) CreateSession(tocZero *api.Toc) (*api.SessionCredentials, error
 	session := &api.Session{
 		Id:            sessID,
 		CreatedAt:     time.Now(),
-		Status:        "pending",
 		Complete:      false,
 		TocGroupId:    tocZero.GroupId,
 		TocsInGroup:   tocZero.GroupSize,
@@ -161,15 +160,44 @@ func isValidAgeArmoredString(armored string) bool {
 	return true
 }
 
+var ErrNotEnoughTocs = errors.New("the provided Tocs are less than the threshold")
+
 func (o *Oracle) GenerateTOTP(id string, key *api.SessionKeyEncryptionKey) (string, error) {
-	tocs, err := o.decryptTocs(id, key)
+
+	session, err := o.store.GetSession(id)
 	if err != nil {
-		return "", fmt.Errorf("failed to retrieve tocs")
+		return "", fmt.Errorf("failed to retrieve session: %w", err)
 	}
 
-	shares := make([]string, len(tocs))
-	for i := range tocs {
-		shares[i] = tocs[i].Share
+	encryptedTocs, err := o.store.GetEncryptedTocs(id)
+	if err != nil {
+		return "", fmt.Errorf("failed to retrieve encrypted Tocs: %w", err)
+	}
+
+	if len(encryptedTocs) < session.TocsThreshold {
+		return "", ErrNotEnoughTocs
+	}
+
+	encTEK, err := o.store.GetTEK(id)
+	if err != nil {
+		return "", fmt.Errorf("failed to retrieve encrypted TEK: %w", err)
+	}
+	tek, err := decryptTek(key, encTEK)
+	if err != nil {
+		return "", fmt.Errorf("failed to decrypt TEK: %w", err)
+	}
+	decryptedTocs := make([]api.Toc, len(encryptedTocs))
+	for i, encToc := range encryptedTocs {
+		decToc, err := decryptToc(tek, encToc)
+		if err != nil {
+			return "", fmt.Errorf("failed to decrypt a Toc: %w", err)
+		}
+		decryptedTocs[i] = *decToc
+	}
+
+	shares := make([]string, len(decryptedTocs))
+	for i := range decryptedTocs {
+		shares[i] = decryptedTocs[i].Share
 	}
 
 	totpSecret, err := sssa.Combine(shares)
@@ -183,34 +211,6 @@ func (o *Oracle) GenerateTOTP(id string, key *api.SessionKeyEncryptionKey) (stri
 	}
 
 	return otp, nil
-}
-
-func (o *Oracle) decryptTocs(id string, key *api.SessionKeyEncryptionKey) ([]api.Toc, error) {
-	// TODO Ensure there's enough Tocs
-
-	encTEK, err := o.store.GetTEK(id)
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve encrypted TEK: %w", err)
-	}
-	tek, err := decryptTek(key, encTEK)
-	if err != nil {
-		return nil, fmt.Errorf("failed to decrypt TEK: %w", err)
-	}
-
-	encryptedTocs, err := o.store.GetEncryptedTocs(id)
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve encrypted Tocs: %w", err)
-	}
-	decryptedTocs := make([]api.Toc, len(encryptedTocs))
-	for i, encToc := range encryptedTocs {
-		decToc, err := decryptToc(tek, encToc)
-		if err != nil {
-			return nil, fmt.Errorf("failed to decrypt a Toc: %w", err)
-		}
-		decryptedTocs[i] = *decToc
-	}
-
-	return decryptedTocs, nil
 }
 
 var ErrKekInvalidLength = errors.New("the provided kek has an invalid length")

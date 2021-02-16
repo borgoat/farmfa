@@ -2,7 +2,6 @@ package session
 
 import (
 	"errors"
-
 	"github.com/giorgioazzinnaro/farmfa/api"
 )
 
@@ -27,6 +26,10 @@ type Store interface {
 
 	// GetTEK is used to retrieve the Toc encryption key
 	GetTEK(id string) ([]byte, error)
+
+	// GarbageCollect should process all sessions by sending them to the shouldDelete func;
+	// if it returns true, remove the given session from storage
+	GarbageCollect(shouldDelete func(session *api.Session) bool)
 }
 
 var ErrSessionNotFound = errors.New("session not found")

@@ -93,7 +93,6 @@ func (s *Server) GenerateTotp(ctx echo.Context, id string) error {
 		return ctx.JSON(http.StatusInternalServerError, api.DefaultError{})
 	}
 
-	resp.Status = "complete"
 	resp.Totp = totp
 
 	return ctx.JSON(http.StatusOK, resp)

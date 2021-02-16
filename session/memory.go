@@ -65,6 +65,7 @@ func (i *InMemoryStore) AddEncryptedToc(id string, encryptedToc string) error {
 	}
 
 	s.encryptedTocs = append(s.encryptedTocs, encryptedToc)
+	s.session.TocsProvided += 1
 
 	return nil
 }
@@ -85,4 +86,12 @@ func (i *InMemoryStore) GetTEK(id string) ([]byte, error) {
 	}
 
 	return s.encryptedTek, nil
+}
+
+func (i *InMemoryStore) GarbageCollect(shouldDelete func(session *api.Session) bool) {
+	for j, s := range i.sessions {
+		if shouldDelete(s.session) {
+			delete(i.sessions, j)
+		}
+	}
 }
