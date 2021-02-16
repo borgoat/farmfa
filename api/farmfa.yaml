@@ -107,15 +107,17 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/SessionKeyEncryptionKey'
+        required: true
       responses:
         default:
           $ref: '#/components/responses/DefaultError'
+        # TODO: not yet ready error
         '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OracleResponse'
+                $ref: '#/components/schemas/TOTPCode'
 
 components:
   schemas:
@@ -204,9 +206,6 @@ components:
           type: integer
           minimum: 1
           description: The number of Tocs already provided by consituents to the oracle for this session
-        status:
-          type: string
-          description: This is needed to discriminate the TOTP from the session
       required:
         - id
         - toc_group_id
@@ -215,7 +214,6 @@ components:
         - tocs_in_group
         - tocs_threshold
         - tocs_provided
-        - status
 
     AddToc:
       type: object
@@ -272,26 +270,10 @@ components:
           type: string
           format: date-time
           description: The time when this session will expire and cannot be called again
-        status:
-          type: string
-          description: This is needed to discriminate the TOTP from the session
       required:
         - totp
         - totp_expires_at
         - session_expires_at
-        - status
-
-    OracleResponse:
-      description: >
-        Depending on the status of the Session, either return a description of the Session itself, or the TOTP code
-      oneOf:
-        - $ref: '#/components/schemas/Session'
-        - $ref: '#/components/schemas/TOTPCode'
-      discriminator:
-        propertyName: status
-        mapping:
-          pending: '#/components/schemas/Session'
-          complete: '#/components/schemas/TOTPCode'
 
 # All errors
     Error:
