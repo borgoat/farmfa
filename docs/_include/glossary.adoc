@@ -1,0 +1,29 @@
+== Glossary
+
+[[secret]]secret:: A TOTP is a hash generated from a secret.
+This secret is usually shown as a QR code and shared between the prover and verifier.
+In {product}, the prover becomes a distributed entity: recipients who share the key material,
+and an oracle that actually generates the TOTP.
+
+[[Toc]]Toc:: The "pieces" in which a TOTP secret gets split.
+
+[[deal]]deal:: The workflow in which a dealer splits a secret in Tocs and shares them with multiple players.
+
+[[dealer]]dealer:: Creates Tocs from a secret, and shares them with players.
+
+[[player]]player:: During the Tocs creation phase, the individuals who each receive one of said Tocs.
+
+[[session]]session:: Describes the workflow in which an applicant requires combining Tocs to generate a TOTP.
+
+[[applicant]]applicant:: Initiates a session to request access to a TOTP.
+
+[[constituent]]constituent:: The individuals who join a session to authorise an applicant to generate a TOTP, by reaching a quorum/threshold.
+
+[[oracle]]oracle:: The entity that reconstructs Tocs into TOTP secrets, and generates one-time passwords.
+Also called the _prover_, as defined in <<RFC6238>>.
+
+[[server]]server:: In our context synonym with _oracle_.
+
+[[TOTP]]TOTP:: As defined in <<RFC6238>>:
+"an extension of the One-Time Password (OTP) algorithm [...] to support the time-based moving factor".
+Used by many applications as a second authentication factor.

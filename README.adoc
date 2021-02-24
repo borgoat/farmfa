@@ -1,0 +1,109 @@
+= {product}
+Giorgio Azzinnaro <giorgio@azzinna.ro>
+:toc:
+:includedir: docs/_include
+:product: farMFA
+:repo: borgoat/farmfa
+
+image:https://img.shields.io/github/license/{repo}?color=blue&style=flat-square[License, link=LICENSE]
+image:https://goreportcard.com/badge/github.com/{repo}[Go Report Card, link=https://goreportcard.com/report/github.com/{repo}]
+image:https://pkg.go.dev/badge/github.com/{repo}[PkgGoDev, link=https://pkg.go.dev/github.com/{repo}]
+
+
+== Concept
+
+Multi Factor Authentication is usually implemented by using the TOTP standard <<RFC6238>> from OATH.
+
+* A secret key is shared upon activation and stored by the user (usually in an app such as Authenticator)
+and by the authentication server.
+* Upon login, the user, after providing the credentials, will input a One-Time Password.
+This password is generated applying the TOTP algorithm to the secret key and to the current time.
+* The server will generate the same password, and if they match, the user will be able to go through.
+The secret key is never shared again by the user or the server.
+
+The generated One-Time Password, as the name suggests, may only be used once
+(or more precisely, within a timeframe of around 30 seconds to 90 seconds, depending on the server implementation).
+
+{product} comes into play in shared environments where access to certain accounts
+should be restricted to very special occasions
+(for example, access to the root user of an AWS account,
+especially the root user of the management account of an AWS Organization).
+In this context, we can secure the access in such a way that, after the credentials to the account are retrieved,
+the second level of authorisation must come from multiple individuals.
+First of all, we apply _Shamir's Secret Sharing_ scheme <<2>> to the original TOTP secret key,
+so that at least 3 of 5 holders are needed to reconstruct it.
+Additionally, the TOTP secret key is only ever reconstructed in {product}'s server memory,
+meaning no single player has ever to risk accessing and accidentally leaking/persisting it.
+After having reconstructed the secret, {product} will then generate one or more OTPs for the dealer,
+until the session expires.
+
+== Getting started
+
+{product} is a client-server application.
+Some operations are stateless (the creation of the shares) and may even be executed client-side,
+while managing authentication sessions (joining shares, generating TOTP) relies on the server memory.
+When using an optional persistence layer, all data is encrypted at rest,
+and may only be decrypted once the applicant provides a decryption key.
+
+=== Split TOTP secret and share
+
+#TODO: implement new <<dealer>> procedures in CLI#
+
+=== Generate a TOTP
+
+When a user wants to log in they can start a <<session>>. We'll now refer to them as <<applicant>>.
+
+[source,shell]
+.Applicant
+----
+$ http --body POST localhost:8080/sessions toc_zero:='{"group_id":"J7UHQPZK","group_size":5,"group_threshold":2,"share":"5Ovpu-PKEeYXx5ebiQhzU_AT0Z79POf8GGkskDp3its=urkBkVXr-pYjIvTt1ch2YJILCScAoRquLoX_VBxxps4=","toc_id":"TFW52GAK"}'
+{
+    "complete": false,
+    "created_at": "2021-02-24T18:05:53.507396809+01:00",
+    "id": "V5K6QD4XUFLRGCZH",
+    "kek": "MIotBtYOWrXnQCj6o9rSNIkNeRfIPhNLjEdQtJDDemPRJcKUbme+iq5K2Hc6Ypil6Loi/K9rnN/YrJiKDT/tPi8kFq2WuAY8zl8=",
+    "tek": "age1cl5ndmdsq09vs09awlpt8nd4cdu6fpl33lpyyuv75syknqalkpdszwnwyc",
+    "toc_group_id": "J7UHQPZK",
+    "tocs_in_group": 5,
+    "tocs_provided": 1,
+    "tocs_threshold": 2
+}
+
+----
+
+The applicant now shares the _Toc Encryption Key (TEK)_ with team members who hold other <<Toc,Tocs>> of the same group.
+Those team members who want to authorise the applicant will become the session's <<constituent,constituents>>.
+
+Constituents must encrypt and armor their Toc with TEK (using https://age-encryption.org/[Age]).
+
+[source,shell]
+.Constituent
+----
+$ export ENCTOC=$(echo '{"group_id":"J7UHQPZK","group_size":5,"group_threshold":2,"share":"zxRrozuUaCMgn_u6ajZStlV7RKwhp0keT9aQoXAEruI=nfx2CPJfKiFM32zLmtxHjV94OlZOgBevV1Whrx-lslU=","toc_id":"K5FSSJSV"}' | age -r age1cl5ndmdsq09vs09awlpt8nd4cdu6fpl33lpyyuv75syknqalkpdszwnwyc -a)
+----
+
+Constituents now share the encrypted Toc with the <<oracle>>, and associate it with the existing session.
+
+[source,shell]
+.Constituent
+----
+$ http POST localhost:8080/sessions/V5K6QD4XUFLRGCZH/tocs encrypted_toc="$ENCTOC"
+HTTP/1.1 200 OK
+----
+
+Once enough Tocs have been provided to the oracle, the applicant may now query the oracle.
+The applicant must provide the session's KEK to authorise the oracle to decrypt the Tocs, and generate the <<TOTP>>.
+
+[source,shell]
+.Constituent
+----
+$ http --body POST localhost:8080/sessions/V5K6QD4XUFLRGCZH/totp kek="MIotBtYOWrXnQCj6o9rSNIkNeRfIPhNLjEdQtJDDemPRJcKUbme+iq5K2Hc6Ypil6Loi/K9rnN/YrJiKDT/tPi8kFq2WuAY8zl8="
+{
+    "totp": "824588"
+}
+
+----
+
+
+include::{includedir}/bibliography.adoc[]
+include::{includedir}/glossary.adoc[]

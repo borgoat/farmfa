@@ -2,7 +2,8 @@
 Giorgio Azzinnaro <giorgio@azzinna.ro>
 v0.2, 2021-02-13
 :toc:
-:homepage: https://github.com/giorgioazzinnaro/farmfa
+:includedir: _include
+:homepage: https://github.com/borgoat/farmfa
 :product: farMFA
 
 == Overview
@@ -129,40 +130,6 @@ o --> o:   join decrypted Tocs\nand generate TOTP
 o --> a:   TOTP
 ....
 
-[bibliography]
-== References
 
-- [[[RFC6238]]] M'Raihi, D., Machani, S., Pei, M., and J. Rydell, "TOTP: Time-Based One-Time Password Algorithm",
-                RFC 6238, DOI 10.17487/RFC6238, May 2011, <https://www.rfc-editor.org/info/rfc6238>.
-- [[[SSS,2]]] Adi Shamir. 1979. How to share a secret. Commun. ACM 22, 11 (Nov. 1979), 612–613.
-            DOI:https://doi.org/10.1145/359168.359176
-
-== Glossary
-
-secret:: A TOTP is a hash generated from a secret.
-         This secret is usually shown as a QR code and shared between the prover and verifier.
-         In {product}, the prover becomes a distributed entity: recipients who share the key material,
-         and an oracle that actually generates the TOTP.
-
-Toc:: The "pieces" in which a TOTP secret gets split.
-
-deal:: The workflow in which a dealer splits a secret in Tocs and shares them with multiple players.
-
-dealer:: Creates Tocs from a secret, and shares them with players.
-
-player:: During the Tocs creation phase, the individuals who each receive one of said Tocs.
-
-session:: Describes the workflow in which an applicant requires combining Tocs to generate a TOTP.
-
-applicant:: Initiates a session to request access to a TOTP.
-
-constituent:: The individuals who join a session to authorise an applicant to generate a TOTP, by reaching a quorum/threshold.
-
-oracle:: The entity that reconstructs Tocs into TOTP secrets, and generates one-time passwords.
-         Also called the _prover_, as defined in <<RFC6238>>.
-
-server:: In our context synonym with _oracle_.
-
-TOTP:: As defined in <<RFC6238>>:
-       "an extension of the One-Time Password (OTP) algorithm [...] to support the time-based moving factor".
-       Used by many applications as a second authentication factor.
+include::{includedir}/bibliography.adoc[]
+include::{includedir}/glossary.adoc[]
