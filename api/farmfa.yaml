@@ -13,16 +13,26 @@ info:
 servers:
   - url: https://farmfa.example.com/v1alpha1
   - url: /
-paths:
 
+tags:
+  - name: core
+    description: This functionality is mandatory to implement the _farMFA_ specs
+  - name: optional
+    description: Additional functionality that is not strictly required
+  - name: session
+    description: Actions related to _sessions_ - the core workflow where an applicant joins Tocs to reconstruct a TOTP
+
+paths:
+  #region paths/session
   /sessions:
     post:
       tags:
+        - core
         - session
       summary: Start a new session
-      description: >
+      description: |
         A session describes the workflow in which an applicant requires combining Tocs to generate a TOTP.
-        The applicant must already have a Toc
+        The applicant must already have a Toc.
       operationId: createSession
       requestBody:
         required: true
@@ -43,6 +53,7 @@ paths:
   /sessions/{id}:
     get:
       tags:
+        - core
         - session
       summary: Retrieve a session details by its ID
       operationId: getSession
@@ -66,8 +77,8 @@ paths:
   /sessions/{id}/tocs:
     post:
       tags:
+        - core
         - session
-        - toc
       summary: Join a new Toc to an existing session
       operationId: postToc
       parameters:
@@ -94,6 +105,7 @@ paths:
       summary: Close the session and generate the TOTP
       operationId: generateTotp
       tags:
+        - core
         - session
       parameters:
         - name: id
@@ -118,9 +130,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TOTPCode'
+  #endregion paths/session
 
 components:
   schemas:
+    #region components.schemas/session
     NewSession:
       type: object
       properties:
@@ -137,7 +151,7 @@ components:
 
     SessionCredentials:
       type: object
-      description: >
+      description: |
         Returned when creating a new Session.
         This object should be kept secret by the applicant, and used when generating the TOTP.
       allOf:
@@ -150,7 +164,7 @@ components:
       properties:
         tek:
           type: string
-          description: >
+          description: |
             A public key used by constituents to encrypt their Tocs before sharing them with the oracle.
             The applicant receives it when creating a sessions,
             and must share it with constituents when requesting their approval.
@@ -163,7 +177,7 @@ components:
         kek:
           type: string
           format: byte
-          description: >
+          description: |
             A key used to encrypt the Toc encryption key held by the oracle.
             This key is kept by the applicant and shared when a TOTP is generated.
       required:
@@ -274,6 +288,7 @@ components:
         - totp
         - totp_expires_at
         - session_expires_at
+    #endregion components.schemas/session
 
 # All errors
     Error:
