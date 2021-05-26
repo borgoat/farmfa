@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"filippo.io/age"
 	"filippo.io/age/armor"
-	"github.com/giorgioazzinnaro/farmfa/api"
+	"github.com/borgoat/farmfa/api"
 )
 
 // EncryptFunc turns a Toc into an encrypted string

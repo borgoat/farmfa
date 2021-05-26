@@ -8,8 +8,8 @@ import (
 
 	"filippo.io/age"
 	"filippo.io/age/armor"
-	"github.com/giorgioazzinnaro/farmfa/api"
-	"github.com/giorgioazzinnaro/farmfa/session"
+	"github.com/borgoat/farmfa/api"
+	"github.com/borgoat/farmfa/session"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -24,7 +24,7 @@ func TestOracle_CreateSession(t *testing.T) {
 		TocId:          "RSIFMOCY",
 	})
 	assert.NoError(t, err)
-	assert.Equal(t, "pending", creds.Status)
+	assert.Equal(t, false, creds.Complete)
 
 	// assert that TEK is a valid age recipient
 	_, err = age.ParseX25519Recipient(creds.Tek)

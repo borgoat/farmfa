@@ -3,7 +3,7 @@ package server
 import (
 	"net/http"
 
-	"github.com/giorgioazzinnaro/farmfa/api"
+	"github.com/borgoat/farmfa/api"
 	"github.com/labstack/echo/v4"
 )
 

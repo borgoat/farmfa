@@ -1,14 +1,15 @@
 package deal
 
 import (
+	"encoding/base32"
 	"errors"
 	"fmt"
 	"time"
 
-	"github.com/SSSaaS/sssa-golang"
-	"github.com/giorgioazzinnaro/farmfa/api"
-	"github.com/giorgioazzinnaro/farmfa/ptr"
-	"github.com/giorgioazzinnaro/farmfa/random"
+	"github.com/borgoat/farmfa/api"
+	"github.com/borgoat/farmfa/ptr"
+	"github.com/borgoat/farmfa/random"
+	"github.com/hashicorp/vault/shamir"
 	"github.com/pquerna/otp/totp"
 )
 
@@ -39,7 +40,12 @@ func CreateTocs(note, secret string, players []*Player, threshold int) (map[stri
 		return nil, fmt.Errorf("failed to generate group ID: %w", err)
 	}
 
-	shares, err := sssa.Create(threshold, groupSize, secret)
+	tocIDs, err := shamir.Split([]byte(groupID), groupSize, threshold)
+	if err != nil {
+		return nil, fmt.Errorf("failed to split group ID into Toc IDs: %w", err)
+	}
+
+	shares, err := shamir.Split([]byte(secret), groupSize, threshold)
 	if err != nil {
 		return nil, fmt.Errorf("failed to split secret into shares: %w", err)
 	}
@@ -48,10 +54,7 @@ func CreateTocs(note, secret string, players []*Player, threshold int) (map[stri
 
 	for i, p := range players {
 
-		tocID, err := random.String(5)
-		if err != nil {
-			return nil, fmt.Errorf("failed to generate Toc ID: %w", err)
-		}
+		tocID := base32.StdEncoding.EncodeToString(tocIDs[i])
 
 		toc := &api.Toc{
 			GroupId:        groupID,
@@ -59,7 +62,7 @@ func CreateTocs(note, secret string, players []*Player, threshold int) (map[stri
 			GroupThreshold: threshold,
 			Note:           ptr.String(note),
 			TocId:          tocID,
-			Share:          shares[i],
+			Share:          string(shares[i]),
 		}
 
 		enc, err := p.EncryptToc(toc)

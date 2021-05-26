@@ -1,8 +1,8 @@
 package server
 
 import (
-	"github.com/giorgioazzinnaro/farmfa/api"
-	"github.com/giorgioazzinnaro/farmfa/session"
+	"github.com/borgoat/farmfa/api"
+	"github.com/borgoat/farmfa/session"
 )
 
 type Server struct {

@@ -1,6 +1,6 @@
 package main
 
-import "github.com/giorgioazzinnaro/farmfa/cmd"
+import "github.com/borgoat/farmfa/cmd"
 
 func main() {
 	err := cmd.Execute()

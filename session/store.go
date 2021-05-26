@@ -2,7 +2,7 @@ package session
 
 import (
 	"errors"
-	"github.com/giorgioazzinnaro/farmfa/api"
+	"github.com/borgoat/farmfa/api"
 )
 
 // Store is used to keep track of Sessions, and their Tocs

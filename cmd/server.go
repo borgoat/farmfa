@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	"github.com/deepmap/oapi-codegen/pkg/middleware"
-	"github.com/giorgioazzinnaro/farmfa/api"
-	"github.com/giorgioazzinnaro/farmfa/server"
-	"github.com/giorgioazzinnaro/farmfa/session"
+	"github.com/borgoat/farmfa/api"
+	"github.com/borgoat/farmfa/server"
+	"github.com/borgoat/farmfa/session"
 	"github.com/labstack/echo/v4"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

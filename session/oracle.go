@@ -12,9 +12,9 @@ import (
 
 	"filippo.io/age"
 	"filippo.io/age/armor"
-	"github.com/SSSaaS/sssa-golang"
-	"github.com/giorgioazzinnaro/farmfa/api"
-	"github.com/giorgioazzinnaro/farmfa/random"
+	"github.com/borgoat/farmfa/api"
+	"github.com/borgoat/farmfa/random"
+	"github.com/hashicorp/vault/shamir"
 	"github.com/pquerna/otp/totp"
 )
 
@@ -195,17 +195,17 @@ func (o *Oracle) GenerateTOTP(id string, key *api.SessionKeyEncryptionKey) (stri
 		decryptedTocs[i] = *decToc
 	}
 
-	shares := make([]string, len(decryptedTocs))
+	shares := make([][]byte, len(decryptedTocs))
 	for i := range decryptedTocs {
-		shares[i] = decryptedTocs[i].Share
+		shares[i] = []byte(decryptedTocs[i].Share)
 	}
 
-	totpSecret, err := sssa.Combine(shares)
+	totpSecret, err := shamir.Combine(shares)
 	if err != nil {
 		return "", fmt.Errorf("failed to reconstruct TOTP secret: %w", err)
 	}
 
-	otp, err := totp.GenerateCode(totpSecret, time.Now())
+	otp, err := totp.GenerateCode(string(totpSecret), time.Now())
 	if err != nil {
 		return "", fmt.Errorf("failed to generate TOTP: %w", err)
 	}

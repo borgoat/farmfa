@@ -3,7 +3,7 @@ package session
 import (
 	"sync"
 
-	"github.com/giorgioazzinnaro/farmfa/api"
+	"github.com/borgoat/farmfa/api"
 )
 
 type inMemSession struct {

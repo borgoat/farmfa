@@ -9,8 +9,8 @@ import (
 
 	"filippo.io/age"
 	"filippo.io/age/armor"
-	"github.com/giorgioazzinnaro/farmfa/deal"
-	"github.com/giorgioazzinnaro/farmfa/random"
+	"github.com/borgoat/farmfa/deal"
+	"github.com/borgoat/farmfa/random"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -64,7 +64,7 @@ func TestCreateTocs_basic(t *testing.T) {
 
 		w, err := io.Copy(ioutil.Discard, decrypter)
 		assert.NoError(t, err)
-		assert.Greater(t, w, int64(0))
+		assert.Greater(t, w, int64(0), "encrypted toc is", toc)
 	}
 }
 
