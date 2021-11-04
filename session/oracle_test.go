@@ -16,12 +16,12 @@ import (
 func TestOracle_CreateSession(t *testing.T) {
 	m := session.NewOracle(session.NewInMemoryStore())
 	creds, err := m.CreateSession(&api.Toc{
-		GroupId:        "GIWYCRKS",
+		GroupId:        "TTXAIGO4",
 		GroupSize:      20,
 		GroupThreshold: 10,
 		Note:           nil,
-		Share:          "EjidONG9xkvJAzhZzn3bKua4_5rChSfQvbc3q2sFqQ0=mL_35wzKgcTUF4iOiIdI5iYy8eXCjDdCI-4XibSVqWo=",
-		TocId:          "RSIFMOCY",
+		Share:          []byte{0x33, 0x5D, 0x58, 0x8C, 0x29, 0x7A, 0x81, 0x43, 0x5D, 0x9B, 0x8E, 0x50, 0xC3, 0xEF, 0xB0, 0x7D, 0x62, 0xE5, 0xA7, 0xD8, 0xA3, 0x12, 0x85, 0x59, 0x8C, 0xE4, 0x7, 0xA9, 0x4F, 0x20, 0xD3, 0xB8, 0x12},
+		TocId:          []byte{0x26, 0x7, 0x2B, 0x5, 0xF3, 0x7D, 0x10, 0x38, 0x44},
 	})
 	assert.NoError(t, err)
 	assert.Equal(t, false, creds.Complete)
@@ -34,28 +34,28 @@ func TestOracle_CreateSession(t *testing.T) {
 func TestOracle_AddToc_valid(t *testing.T) {
 	m := session.NewOracle(session.NewInMemoryStore())
 	creds, err := m.CreateSession(&api.Toc{
-		GroupId:        "4TRP4K4R",
+		GroupId:        "ZUX44STM",
 		GroupSize:      20,
 		GroupThreshold: 10,
 		Note:           nil,
-		Share:          "WLkXB9ZOScDGlzuaVDYF61UkH68In_lrQ1WoZSUN53I=B4D_B-HZoDuGvRWzi9KOdSFrecpjIVqsjLs-MCtNlP0=",
-		TocId:          "LLOAXTBV",
+		Share:          []byte{0x90, 0x8D, 0xA3, 0xC6, 0xB0, 0x9A, 0xEE, 0x7E, 0x85, 0xA3, 0xB3, 0xE, 0x19, 0xEE, 0x25, 0x28, 0xD9, 0x37, 0x25, 0xA7, 0xB2, 0xBE, 0x65, 0xF6, 0xAD, 0x5B, 0xED, 0xD5, 0x9B, 0x69, 0xF9, 0xC6, 0xA},
+		TocId:          []byte{0xB4, 0xF, 0x68, 0x1B, 0x5D, 0xB8, 0x42, 0x87, 0x6D},
 	})
 	assert.NoError(t, err)
 
-	err = m.AddToc(creds.Id, "-----BEGIN AGE ENCRYPTED FILE-----\nYWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBrVHUyVVQ2UHQzdHk2RGYw\nY2xGMWwvNUwvNGRwaThGUHk5NU9LZmtDdndVClg1S1ZqdGtpMVdWbThjem5XY09x\naFpCT094ZGZTSVBuTHpxSUt0NC9HUjgKLS0tIHRnVGFmcDJ5ZnQyMDdhNm9ocFVG\ndVQxdmJrL2FuZmZ4OHZ3MVdGV1NtZXcKfLvPWhP8je+azJn3hwb/QeQ4lV91rDca\niuVX2+ch9Vks5/mKx6hf0HhDs2Ak7gifdfJAuzzyPp2ap+Oy5rQleIUf7lCmPCq5\nY0Ued1ohwpeMMa7gMFL5cjOrwGAHDqZ4ur9xk1uKfS7wTJ3fPp/xPJPJnAmOT8Xg\nMDCcObCFaY/5ewWWPJHqVmt+MhmNmjMrO5wIzK7qGnQbNRUAAjalWxjjvC+V//SO\n+PjDUNVDBnVJk0kZE/GZh5YcHuVC6poPgZyPswsd5jF/P5d9zD7b2+rJujyrJTus\nKMnCDLMD0ut6YcPNP/fulQ==\n-----END AGE ENCRYPTED FILE-----\n")
+	err = m.AddToc(creds.Id, "-----BEGIN AGE ENCRYPTED FILE-----\nYWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBaSXR1aVIyTFFoUjFTMS9q\nRDBPTm05V3JxV3Rvc2tqdGFaYXdEQ3ZZeVhzCjRLRE96OVFkNFE3WUVpMUxmdCth\nTlpJbVFLaCtteDhMZ0pVVU5wanI2L3MKLS0tIFdiSXlrSGFSdTdDb2pRenJCN3dW\ndXVNN3hhTWJLdm05Vy9WRlF6cHdDdzgKlaMq9Aiaz98nHMzmGoRoyjU+DxxR3tVh\n/B981Y+P2ZHIaS9Dzr4pR2SbX/Y/SdTdYkACvET3uXNvVAtFMgETQcQwan2sEkty\nVmb82mem0r9/WyWQ6N1psebsEkicOo2LGJkcDgeNlSWmRPrT830NRim4LLqVkWpe\npqaUdRcIu0H4eP4yAdHwXAyUtuualkLZuax/t7D4W5mzu+UOdqYkOqvh84wpX9Ml\nQ2CzgL+KACOmE/lMh5qGxfydnxw0z19p\n-----END AGE ENCRYPTED FILE-----\n")
 	assert.NoError(t, err)
 }
 
 func TestOracle_AddToc_empty(t *testing.T) {
 	m := session.NewOracle(session.NewInMemoryStore())
 	creds, err := m.CreateSession(&api.Toc{
-		GroupId:        "GIWYCRKS",
+		GroupId:        "ZUX44STM",
 		GroupSize:      20,
 		GroupThreshold: 10,
 		Note:           nil,
-		Share:          "EjidONG9xkvJAzhZzn3bKua4_5rChSfQvbc3q2sFqQ0=mL_35wzKgcTUF4iOiIdI5iYy8eXCjDdCI-4XibSVqWo=",
-		TocId:          "RSIFMOCY",
+		Share:          []byte{0x90, 0x8D, 0xA3, 0xC6, 0xB0, 0x9A, 0xEE, 0x7E, 0x85, 0xA3, 0xB3, 0xE, 0x19, 0xEE, 0x25, 0x28, 0xD9, 0x37, 0x25, 0xA7, 0xB2, 0xBE, 0x65, 0xF6, 0xAD, 0x5B, 0xED, 0xD5, 0x9B, 0x69, 0xF9, 0xC6, 0xA},
+		TocId:          []byte{0xB4, 0xF, 0x68, 0x1B, 0x5D, 0xB8, 0x42, 0x87, 0x6D},
 	})
 	assert.NoError(t, err)
 
@@ -66,12 +66,12 @@ func TestOracle_AddToc_empty(t *testing.T) {
 func TestOracle_AddToc_notEncrypted(t *testing.T) {
 	m := session.NewOracle(session.NewInMemoryStore())
 	creds, err := m.CreateSession(&api.Toc{
-		GroupId:        "GIWYCRKS",
+		GroupId:        "ZUX44STM",
 		GroupSize:      20,
 		GroupThreshold: 10,
 		Note:           nil,
-		Share:          "EjidONG9xkvJAzhZzn3bKua4_5rChSfQvbc3q2sFqQ0=mL_35wzKgcTUF4iOiIdI5iYy8eXCjDdCI-4XibSVqWo=",
-		TocId:          "RSIFMOCY",
+		Share:          []byte{0x90, 0x8D, 0xA3, 0xC6, 0xB0, 0x9A, 0xEE, 0x7E, 0x85, 0xA3, 0xB3, 0xE, 0x19, 0xEE, 0x25, 0x28, 0xD9, 0x37, 0x25, 0xA7, 0xB2, 0xBE, 0x65, 0xF6, 0xAD, 0x5B, 0xED, 0xD5, 0x9B, 0x69, 0xF9, 0xC6, 0xA},
+		TocId:          []byte{0xB4, 0xF, 0x68, 0x1B, 0x5D, 0xB8, 0x42, 0x87, 0x6D},
 	})
 	assert.NoError(t, err)
 
@@ -82,31 +82,31 @@ func TestOracle_AddToc_notEncrypted(t *testing.T) {
 func TestOracle_AddToc_alreadyExists(t *testing.T) {
 	m := session.NewOracle(session.NewInMemoryStore())
 	creds, err := m.CreateSession(&api.Toc{
-		GroupId:        "GIWYCRKS",
+		GroupId:        "ZUX44STM",
 		GroupSize:      20,
 		GroupThreshold: 10,
 		Note:           nil,
-		Share:          "EjidONG9xkvJAzhZzn3bKua4_5rChSfQvbc3q2sFqQ0=mL_35wzKgcTUF4iOiIdI5iYy8eXCjDdCI-4XibSVqWo=",
-		TocId:          "RSIFMOCY",
+		Share:          []byte{0x90, 0x8D, 0xA3, 0xC6, 0xB0, 0x9A, 0xEE, 0x7E, 0x85, 0xA3, 0xB3, 0xE, 0x19, 0xEE, 0x25, 0x28, 0xD9, 0x37, 0x25, 0xA7, 0xB2, 0xBE, 0x65, 0xF6, 0xAD, 0x5B, 0xED, 0xD5, 0x9B, 0x69, 0xF9, 0xC6, 0xA},
+		TocId:          []byte{0xB4, 0xF, 0x68, 0x1B, 0x5D, 0xB8, 0x42, 0x87, 0x6D},
 	})
 	assert.NoError(t, err)
 
-	err = m.AddToc(creds.Id, "-----BEGIN AGE ENCRYPTED FILE-----\nYWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBrVHUyVVQ2UHQzdHk2RGYw\nY2xGMWwvNUwvNGRwaThGUHk5NU9LZmtDdndVClg1S1ZqdGtpMVdWbThjem5XY09x\naFpCT094ZGZTSVBuTHpxSUt0NC9HUjgKLS0tIHRnVGFmcDJ5ZnQyMDdhNm9ocFVG\ndVQxdmJrL2FuZmZ4OHZ3MVdGV1NtZXcKfLvPWhP8je+azJn3hwb/QeQ4lV91rDca\niuVX2+ch9Vks5/mKx6hf0HhDs2Ak7gifdfJAuzzyPp2ap+Oy5rQleIUf7lCmPCq5\nY0Ued1ohwpeMMa7gMFL5cjOrwGAHDqZ4ur9xk1uKfS7wTJ3fPp/xPJPJnAmOT8Xg\nMDCcObCFaY/5ewWWPJHqVmt+MhmNmjMrO5wIzK7qGnQbNRUAAjalWxjjvC+V//SO\n+PjDUNVDBnVJk0kZE/GZh5YcHuVC6poPgZyPswsd5jF/P5d9zD7b2+rJujyrJTus\nKMnCDLMD0ut6YcPNP/fulQ==\n-----END AGE ENCRYPTED FILE-----\n")
+	err = m.AddToc(creds.Id, "-----BEGIN AGE ENCRYPTED FILE-----\nYWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBaSXR1aVIyTFFoUjFTMS9q\nRDBPTm05V3JxV3Rvc2tqdGFaYXdEQ3ZZeVhzCjRLRE96OVFkNFE3WUVpMUxmdCth\nTlpJbVFLaCtteDhMZ0pVVU5wanI2L3MKLS0tIFdiSXlrSGFSdTdDb2pRenJCN3dW\ndXVNN3hhTWJLdm05Vy9WRlF6cHdDdzgKlaMq9Aiaz98nHMzmGoRoyjU+DxxR3tVh\n/B981Y+P2ZHIaS9Dzr4pR2SbX/Y/SdTdYkACvET3uXNvVAtFMgETQcQwan2sEkty\nVmb82mem0r9/WyWQ6N1psebsEkicOo2LGJkcDgeNlSWmRPrT830NRim4LLqVkWpe\npqaUdRcIu0H4eP4yAdHwXAyUtuualkLZuax/t7D4W5mzu+UOdqYkOqvh84wpX9Ml\nQ2CzgL+KACOmE/lMh5qGxfydnxw0z19p\n-----END AGE ENCRYPTED FILE-----\n")
 	assert.NoError(t, err)
 
-	err = m.AddToc(creds.Id, "-----BEGIN AGE ENCRYPTED FILE-----\nYWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBrVHUyVVQ2UHQzdHk2RGYw\nY2xGMWwvNUwvNGRwaThGUHk5NU9LZmtDdndVClg1S1ZqdGtpMVdWbThjem5XY09x\naFpCT094ZGZTSVBuTHpxSUt0NC9HUjgKLS0tIHRnVGFmcDJ5ZnQyMDdhNm9ocFVG\ndVQxdmJrL2FuZmZ4OHZ3MVdGV1NtZXcKfLvPWhP8je+azJn3hwb/QeQ4lV91rDca\niuVX2+ch9Vks5/mKx6hf0HhDs2Ak7gifdfJAuzzyPp2ap+Oy5rQleIUf7lCmPCq5\nY0Ued1ohwpeMMa7gMFL5cjOrwGAHDqZ4ur9xk1uKfS7wTJ3fPp/xPJPJnAmOT8Xg\nMDCcObCFaY/5ewWWPJHqVmt+MhmNmjMrO5wIzK7qGnQbNRUAAjalWxjjvC+V//SO\n+PjDUNVDBnVJk0kZE/GZh5YcHuVC6poPgZyPswsd5jF/P5d9zD7b2+rJujyrJTus\nKMnCDLMD0ut6YcPNP/fulQ==\n-----END AGE ENCRYPTED FILE-----\n")
+	err = m.AddToc(creds.Id, "-----BEGIN AGE ENCRYPTED FILE-----\nYWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBaSXR1aVIyTFFoUjFTMS9q\nRDBPTm05V3JxV3Rvc2tqdGFaYXdEQ3ZZeVhzCjRLRE96OVFkNFE3WUVpMUxmdCth\nTlpJbVFLaCtteDhMZ0pVVU5wanI2L3MKLS0tIFdiSXlrSGFSdTdDb2pRenJCN3dW\ndXVNN3hhTWJLdm05Vy9WRlF6cHdDdzgKlaMq9Aiaz98nHMzmGoRoyjU+DxxR3tVh\n/B981Y+P2ZHIaS9Dzr4pR2SbX/Y/SdTdYkACvET3uXNvVAtFMgETQcQwan2sEkty\nVmb82mem0r9/WyWQ6N1psebsEkicOo2LGJkcDgeNlSWmRPrT830NRim4LLqVkWpe\npqaUdRcIu0H4eP4yAdHwXAyUtuualkLZuax/t7D4W5mzu+UOdqYkOqvh84wpX9Ml\nQ2CzgL+KACOmE/lMh5qGxfydnxw0z19p\n-----END AGE ENCRYPTED FILE-----\n")
 	assert.ErrorIs(t, err, session.ErrTocAlreadyExists)
 }
 
 func TestOracle_GenerateTOTP(t *testing.T) {
 	m := session.NewOracle(session.NewInMemoryStore())
 	creds, err := m.CreateSession(&api.Toc{
-		GroupId:        "J7UHQPZK",
+		GroupId:        "3OROTSEU",
 		GroupSize:      5,
 		GroupThreshold: 2,
 		Note:           nil,
-		Share:          "5Ovpu-PKEeYXx5ebiQhzU_AT0Z79POf8GGkskDp3its=urkBkVXr-pYjIvTt1ch2YJILCScAoRquLoX_VBxxps4=",
-		TocId:          "TFW52GAK",
+		Share:          []byte{0x71, 0x26, 0x3, 0x97, 0xFD, 0x6F, 0x8C, 0x44, 0x4A, 0x61, 0x40, 0x16, 0xEE, 0x3E, 0x24, 0x66, 0x9F, 0x12, 0xE, 0x98, 0x67, 0x94, 0x6D, 0xDF, 0x38, 0x4C, 0x3, 0x6, 0x7C, 0xE8, 0xC9, 0xBF, 0xA0},
+		TocId:          []byte{0xB0, 0x9F, 0x1C, 0x9B, 0x3F, 0x4B, 0xA2, 0xC3, 0x9B},
 	})
 	assert.NoError(t, err)
 
@@ -120,12 +120,12 @@ func TestOracle_GenerateTOTP(t *testing.T) {
 	jEnc := json.NewEncoder(w)
 
 	err = jEnc.Encode(&api.Toc{
-		GroupId:        "J7UHQPZK",
+		GroupId:        "3OROTSEU",
 		GroupSize:      5,
 		GroupThreshold: 2,
 		Note:           nil,
-		Share:          "zxRrozuUaCMgn_u6ajZStlV7RKwhp0keT9aQoXAEruI=nfx2CPJfKiFM32zLmtxHjV94OlZOgBevV1Whrx-lslU=",
-		TocId:          "K5FSSJSV",
+		Share:          []byte{0x95, 0xC5, 0x4, 0xD2, 0x67, 0xFB, 0x85, 0x58, 0x4A, 0xCD, 0x1C, 0x19, 0x28, 0xD5, 0x78, 0xDE, 0x92, 0x65, 0x45, 0x9D, 0x30, 0xCD, 0xC1, 0xC1, 0xDF, 0x64, 0x44, 0x31, 0xEC, 0x76, 0xE7, 0x6, 0x16},
+		TocId:          []byte{0xB0, 0x9F, 0x1C, 0x9B, 0x3F, 0x4B, 0xA2, 0xC3, 0x9B},
 	})
 	assert.NoError(t, err)
 

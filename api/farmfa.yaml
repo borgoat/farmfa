@@ -244,6 +244,7 @@ components:
       properties:
         toc_id:
           type: string
+          format: byte
           description: A Toc is unique, this ID ensures a Toc is not reused
         group_id:
           type: string
@@ -261,6 +262,7 @@ components:
           description: Free-text to describe the purpose of a Toc
         share:
           type: string
+          format: byte
           description: The actual share that players should keep secret
       required:
         - toc_id

@@ -1,7 +1,6 @@
 package deal
 
 import (
-	"encoding/base32"
 	"errors"
 	"fmt"
 	"time"
@@ -53,16 +52,13 @@ func CreateTocs(note, secret string, players []*Player, threshold int) (map[stri
 	playerTocs := make(map[string]string, groupSize)
 
 	for i, p := range players {
-
-		tocID := base32.StdEncoding.EncodeToString(tocIDs[i])
-
 		toc := &api.Toc{
 			GroupId:        groupID,
 			GroupSize:      groupSize,
 			GroupThreshold: threshold,
 			Note:           ptr.String(note),
-			TocId:          tocID,
-			Share:          string(shares[i]),
+			TocId:          tocIDs[i],
+			Share:          shares[i],
 		}
 
 		enc, err := p.EncryptToc(toc)
