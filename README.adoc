@@ -106,4 +106,5 @@ $ http --body POST localhost:8080/sessions/V5K6QD4XUFLRGCZH/totp kek="MIotBtYOWr
 
 
 include::{includedir}/bibliography.adoc[]
+
 include::{includedir}/glossary.adoc[]
