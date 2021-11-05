@@ -133,6 +133,7 @@ func TestOracle_GenerateTOTP(t *testing.T) {
 	assert.NoError(t, aw.Close())
 
 	err = m.AddToc(creds.Id, out.String())
+	assert.NoError(t, err)
 
 	totp, err := m.GenerateTOTP(creds.Id, &creds.SessionKeyEncryptionKey)
 	assert.NoError(t, err)
