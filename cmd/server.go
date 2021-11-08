@@ -30,7 +30,10 @@ func serverCmd(v *viper.Viper) *cobra.Command {
 
 		api.RegisterHandlers(e, s)
 
-		e.Logger.Fatal(e.Start(v.GetString("bind-address")))
+		err = e.Start(v.GetString("bind-address"))
+		if err != nil {
+			return fmt.Errorf("failed to start server: %w", err)
+		}
 
 		return nil
 	}

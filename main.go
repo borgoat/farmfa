@@ -1,10 +1,14 @@
 package main
 
-import "github.com/borgoat/farmfa/cmd"
+import (
+	"os"
+
+	"github.com/borgoat/farmfa/cmd"
+)
 
 func main() {
 	err := cmd.Execute()
 	if err != nil {
-		panic(err)
+		os.Exit(1)
 	}
 }
