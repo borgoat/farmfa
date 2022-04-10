@@ -100,7 +100,7 @@ end note
 
 
 ==== Generating a TOTP (_Session_)
-This flows is used whenever an applicant requires to authenticate to a service, and thus to generate a TOTP.
+This flow is used when an applicant requires authenticating to a service, and thus must generate a TOTP.
 
 [plantuml]
 ....
@@ -114,8 +114,8 @@ return    SessionKeypair(KEK, TEK, GroupID)
 
 note right
 SessionKeypair is composed of:
-* key encryption key (KEK)
-* Toc encryption public key (TEK)
+* key encryption key (KEK) [symmetric]
+* Toc encryption key (TEK) [public key]
 * Toc Group identifier (GroupID)
 end note
 

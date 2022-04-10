@@ -21,6 +21,7 @@ func rootCmd() *cobra.Command {
 
 	c.AddCommand(
 		serverCmd(v),
+		dealerCmd(v),
 	)
 
 	return c
