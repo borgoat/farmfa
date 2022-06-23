@@ -35,13 +35,13 @@ func (p *Player) EncryptToc(toc *api.Toc) (string, error) {
 }
 
 // EncryptWithAge is used to encrypt a JSON-marshalled Toc with Age for a certain player
-func EncryptWithAge(player age.Recipient) EncryptFunc {
+func EncryptWithAge(playerKeys ...age.Recipient) EncryptFunc {
 	return func(toc *api.Toc) (string, error) {
 		var out bytes.Buffer
 
 		armorW := armor.NewWriter(&out)
 
-		w, err := age.Encrypt(armorW, player)
+		w, err := age.Encrypt(armorW, playerKeys...)
 		if err != nil {
 			return "", fmt.Errorf("failed to create encrypted buffer: %w", err)
 		}
