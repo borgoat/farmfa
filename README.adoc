@@ -47,7 +47,47 @@ and may only be decrypted once the applicant provides a decryption key.
 
 === Split TOTP secret and share
 
-#TODO: implement new <<dealer>> procedures in CLI#
+To split a TOTP secret and generate <<Toc,Tocs>>, you need the Age public keys of players.
+
+You can generate Age keys via https://github.com/FiloSottile/age#readme[age-keygen]:
+
+[source,shell]
+----
+$ age-keygen -o your_own_key.txt
+----
+
+All <<player,players>> run the same command, and share their public key with the <<dealer>>.
+
+Now the dealer may start the process. Usually, they also provide their own public key and keep one Toc.
+
+[source,shell]
+----
+$ farmfa dealer \
+  --totp-secret HXDMVJECJJWSRB3HWIZR4IFUGFTMXBOZ \
+  -p player_1=age174uc3d7qzaulmm75huxazcaynq5et4s9gdr7ajnau204lqny7asq9ens77 \
+  -p player_2=age1pa8m7l4sguj84c5v8qu9gr3mydnmhd8lf633ln2udlp5699uvp2sm2mpzd \
+  -p player_3=age1qegd5t5ajlqzewruz38srlrz05w7xgzq4nn2n5gky872up553v8sl64j3j
+----
+
+This command will return encrypted Tocs, 1 per player.
+
+Assuming the dealer is also player #1, they can now decrypt their own Toc to verify its content.
+
+[source,shell]
+----
+$ age -i your_own_key.txt --decrypt
+[paste the encrypted Toc - Ctrl+D]
+
+{
+    "group_id": "7GCUCI2Y",
+    "group_size": 3,
+    "group_threshold": 3,
+    "note":"",
+    "share":"C2iCgb3pRfxPJw2a7od8p4ShkhrDWAm/Dt6ioQNAVFPZ",
+    "toc_id":"5oaAUX9b6aBE"
+}
+----
+
 
 === Generate a TOTP
 
