@@ -4,6 +4,11 @@ go 1.14
 
 require (
 	filippo.io/age v1.0.0
+	github.com/aws/aws-sdk-go v1.37.19
+	github.com/aws/aws-sdk-go-v2 v1.16.5
+	github.com/aws/aws-sdk-go-v2/credentials v1.12.6
+	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.9.4
+	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.15.7
 	github.com/boombuler/barcode v1.0.1 // indirect
 	github.com/deepmap/oapi-codegen v1.11.0
 	github.com/getkin/kin-openapi v0.97.0
@@ -16,7 +21,8 @@ require (
 	github.com/spf13/viper v1.12.0
 	github.com/stretchr/testify v1.7.2
 	github.com/subosito/gotenv v1.4.0 // indirect
-	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d // indirect
+	github.com/testcontainers/testcontainers-go v0.13.0
+	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d
 	golang.org/x/net v0.0.0-20220622184535-263ec571b305 // indirect
 	golang.org/x/sys v0.0.0-20220622161953-175b2fd9d664 // indirect
 	golang.org/x/time v0.0.0-20220609170525-579cf78fd858 // indirect

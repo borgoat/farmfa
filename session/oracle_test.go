@@ -13,8 +13,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestOracle_CreateSession(t *testing.T) {
-	m := session.NewOracle(session.NewInMemoryStore())
+func genericOracleCreateSesssion(t *testing.T, store session.Store) {
+	m := session.NewOracle(store)
 	creds, err := m.CreateSession(&api.Toc{
 		GroupId:        "TTXAIGO4",
 		GroupSize:      20,
@@ -31,8 +31,8 @@ func TestOracle_CreateSession(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestOracle_AddToc_valid(t *testing.T) {
-	m := session.NewOracle(session.NewInMemoryStore())
+func genericOracleAddToc_valid(t *testing.T, store session.Store) {
+	m := session.NewOracle(store)
 	creds, err := m.CreateSession(&api.Toc{
 		GroupId:        "ZUX44STM",
 		GroupSize:      20,
@@ -47,8 +47,8 @@ func TestOracle_AddToc_valid(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestOracle_AddToc_empty(t *testing.T) {
-	m := session.NewOracle(session.NewInMemoryStore())
+func genericOracleAddToc_empty(t *testing.T, store session.Store) {
+	m := session.NewOracle(store)
 	creds, err := m.CreateSession(&api.Toc{
 		GroupId:        "ZUX44STM",
 		GroupSize:      20,
@@ -63,8 +63,8 @@ func TestOracle_AddToc_empty(t *testing.T) {
 	assert.ErrorIs(t, err, session.ErrEmptyToc)
 }
 
-func TestOracle_AddToc_notEncrypted(t *testing.T) {
-	m := session.NewOracle(session.NewInMemoryStore())
+func genericOracleAddToc_notEncrypted(t *testing.T, store session.Store) {
+	m := session.NewOracle(store)
 	creds, err := m.CreateSession(&api.Toc{
 		GroupId:        "ZUX44STM",
 		GroupSize:      20,
@@ -79,8 +79,8 @@ func TestOracle_AddToc_notEncrypted(t *testing.T) {
 	assert.ErrorIs(t, err, session.ErrTocIsNotEncrypted)
 }
 
-func TestOracle_AddToc_alreadyExists(t *testing.T) {
-	m := session.NewOracle(session.NewInMemoryStore())
+func genericOracleAddToc_alreadyExists(t *testing.T, store session.Store) {
+	m := session.NewOracle(store)
 	creds, err := m.CreateSession(&api.Toc{
 		GroupId:        "ZUX44STM",
 		GroupSize:      20,
@@ -98,8 +98,8 @@ func TestOracle_AddToc_alreadyExists(t *testing.T) {
 	assert.ErrorIs(t, err, session.ErrTocAlreadyExists)
 }
 
-func TestOracle_GenerateTOTP(t *testing.T) {
-	m := session.NewOracle(session.NewInMemoryStore())
+func genericOracleGenerateTOTP(t *testing.T, store session.Store) {
+	m := session.NewOracle(store)
 	creds, err := m.CreateSession(&api.Toc{
 		GroupId:        "3OROTSEU",
 		GroupSize:      5,
