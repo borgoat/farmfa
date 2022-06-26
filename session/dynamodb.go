@@ -14,9 +14,9 @@ import (
 )
 
 type dynamoItem struct {
-	PK   string
-	SK   string
-	Type string
+	PK         string
+	SK         string
+	RecordType string
 }
 
 type dynamoSession struct {
@@ -26,12 +26,12 @@ type dynamoSession struct {
 
 type dynamoEncryptedString struct {
 	dynamoItem
-	encryptedValue string
+	EncryptedValue string
 }
 
 type dynamoEncryptedBytes struct {
 	dynamoItem
-	encryptedValue []byte
+	EncryptedValue []byte `dynamodbav:"value"`
 }
 
 type DDBGetItemApi interface {
@@ -85,9 +85,9 @@ func (d *DynamoDbStore) encryptedTocItem(sessionId, encryptedToc string) (map[st
 
 	tocItem, err := attributevalue.MarshalMap(&dynamoEncryptedString{
 		dynamoItem{
-			PK:   fmt.Sprintf("SESSION#%s", sessionId),
-			SK:   fmt.Sprintf("TOC#%s", base64.StdEncoding.EncodeToString(h.Sum(nil))),
-			Type: "Toc",
+			PK:         fmt.Sprintf("SESSION#%s", sessionId),
+			SK:         fmt.Sprintf("TOC#%s", base64.StdEncoding.EncodeToString(h.Sum(nil))),
+			RecordType: "Toc",
 		},
 		encryptedToc,
 	})
@@ -104,9 +104,9 @@ func (d *DynamoDbStore) getTablePtr() *string {
 func (d *DynamoDbStore) CreateSession(session *api.Session, encryptedTEK []byte, encryptedTocZero string) error {
 	sessionItem, err := attributevalue.MarshalMap(&dynamoSession{
 		dynamoItem{
-			PK:   fmt.Sprintf("SESSION#%s", session.Id),
-			SK:   "SESSION",
-			Type: "Session",
+			PK:         fmt.Sprintf("SESSION#%s", session.Id),
+			SK:         "SESSION",
+			RecordType: "Session",
 		},
 		session,
 	})
@@ -121,9 +121,9 @@ func (d *DynamoDbStore) CreateSession(session *api.Session, encryptedTEK []byte,
 
 	tekItem, err := attributevalue.MarshalMap(&dynamoEncryptedBytes{
 		dynamoItem{
-			PK:   fmt.Sprintf("SESSION#%s", session.Id),
-			SK:   "TEK",
-			Type: "TEK",
+			PK:         fmt.Sprintf("SESSION#%s", session.Id),
+			SK:         "TEK",
+			RecordType: "TEK",
 		},
 		encryptedTEK,
 	})
@@ -227,7 +227,7 @@ func (d *DynamoDbStore) GetEncryptedTocs(id string) ([]string, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to unmarshal toc: %w", err)
 		}
-		tocs[i] = tocItem.encryptedValue
+		tocs[i] = tocItem.EncryptedValue
 	}
 
 	return tocs, nil
@@ -252,7 +252,7 @@ func (d *DynamoDbStore) GetTEK(id string) ([]byte, error) {
 		return nil, fmt.Errorf("failed to unmarhsal tek: %w", err)
 	}
 
-	return tekItem.encryptedValue, nil
+	return tekItem.EncryptedValue, nil
 }
 
 func (d *DynamoDbStore) GarbageCollect(shouldDelete func(session *api.Session) bool) {
