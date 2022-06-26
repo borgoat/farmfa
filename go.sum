@@ -138,7 +138,9 @@ github.com/Jeffail/gabs v1.1.1/go.mod h1:6xMvQMK4k33lb7GUUpaAPh6nKMmemQeg5d4gn7/
 github.com/Joker/hpp v1.0.0/go.mod h1:8x5n+M1Hp5hC0g8okX3sR3vFQwynaX/UgSOM9MeBKzY=
 github.com/Masterminds/goutils v1.1.0/go.mod h1:8cTjp+g8YejhMuvIA5y2vz3BpJxksy863GQaJW2MFNU=
 github.com/Masterminds/semver v1.4.2/go.mod h1:MB6lktGJrhw8PrUyiEoblNEGEQ+RzHPF078ddwwvV3Y=
+github.com/Masterminds/semver v1.5.0 h1:H65muMkzWKEuNDnfl9d70GUjFniHKHRbFPGBuZ3QEww=
 github.com/Masterminds/semver v1.5.0/go.mod h1:MB6lktGJrhw8PrUyiEoblNEGEQ+RzHPF078ddwwvV3Y=
+github.com/Masterminds/semver/v3 v3.1.1 h1:hLg3sBzpNErnxhQtUy/mmLR2I9foDujNK030IGemrRc=
 github.com/Masterminds/semver/v3 v3.1.1/go.mod h1:VPu/7SZ7ePZ3QOrcuXROw5FAcLl4a0cBrbBpGY/8hQs=
 github.com/Masterminds/sprig v2.22.0+incompatible/go.mod h1:y6hNFY5UBTIWBxnzTeuNhlNS5hqE0NB0E6fgfo2Br3o=
 github.com/Microsoft/go-winio v0.4.11/go.mod h1:VhR8bwka0BXejwEJY73c50VrPtXAaKcyvVC4A4RozmA=
@@ -211,6 +213,14 @@ github.com/armon/go-metrics v0.3.10/go.mod h1:4O98XIr/9W0sxpJ8UaYkvjk10Iff7SnFrb
 github.com/armon/go-radix v0.0.0-20180808171621-7fddfc383310/go.mod h1:ufUuZ+zHj4x4TnLV4JWEpy2hxWSpsRywHrMgIH9cCH8=
 github.com/armon/go-radix v1.0.0/go.mod h1:ufUuZ+zHj4x4TnLV4JWEpy2hxWSpsRywHrMgIH9cCH8=
 github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a/go.mod h1:lB+ZfQJz7igIIfQNfa7Ml4HSf2uFQQRzpGGRXenZAgY=
+github.com/aws/aws-cdk-go/awscdk/v2 v2.29.1 h1:OVlD924ncu8lMWt8jQsTktzcrwFTjleqeaUdg8Gp9M0=
+github.com/aws/aws-cdk-go/awscdk/v2 v2.29.1/go.mod h1:EY8h/zcTgdfcg4YCjraAvbKnT8YWplL8mLQutTnIj+M=
+github.com/aws/aws-cdk-go/awscdkapigatewayv2alpha/v2 v2.29.1-alpha.0 h1:PnUpJ3W8qnA/BHv6+86KCJgS8b/q3npcA8XRgwyXNxw=
+github.com/aws/aws-cdk-go/awscdkapigatewayv2alpha/v2 v2.29.1-alpha.0/go.mod h1:PBfAMusMhLaDnVfzN78NoeuKO1NP6kdnZilUvyfxsH4=
+github.com/aws/aws-cdk-go/awscdkapigatewayv2integrationsalpha/v2 v2.29.1-alpha.0 h1:OOM6sc5NMvB7CIzj61JAvDsn4OaBtVsrxfZNOF6qmMk=
+github.com/aws/aws-cdk-go/awscdkapigatewayv2integrationsalpha/v2 v2.29.1-alpha.0/go.mod h1:P7tjyhYy2/w3476px3dYwG3r4ThFVHHah6zky/MV7zE=
+github.com/aws/aws-cdk-go/awscdklambdagoalpha/v2 v2.29.1-alpha.0 h1:Ohif/d2DtfE/n1g2Jhz8ZpQfQXX7dBrwvEGc2U0xb4M=
+github.com/aws/aws-cdk-go/awscdklambdagoalpha/v2 v2.29.1-alpha.0/go.mod h1:GMT/BN/5etprPxkVkg322ZGYVtSCxmsAt4SjdPDCidQ=
 github.com/aws/aws-lambda-go v1.19.1/go.mod h1:jJmlefzPfGnckuHdXX7/80O3BvUUi12XOkbv4w9SGLU=
 github.com/aws/aws-lambda-go v1.32.0 h1:i8MflawW1hoyYp85GMH7LhvAs4cqzL7LOS6fSv8l2KM=
 github.com/aws/aws-lambda-go v1.32.0/go.mod h1:IF5Q7wj4VyZyUFnZ54IQqeWtctHQ9tz+KhcbDenr220=
@@ -261,6 +271,11 @@ github.com/aws/aws-sdk-go-v2/service/sso v1.11.9/go.mod h1:UqRD9bBt15P0ofRyDZX6C
 github.com/aws/aws-sdk-go-v2/service/sts v1.6.1/go.mod h1:hLZ/AnkIKHLuPGjEiyghNEdvJ2PP0MgOxcmv9EBJ4xs=
 github.com/aws/aws-sdk-go-v2/service/sts v1.16.7 h1:HLzjwQM9975FQWSF3uENDGHT1gFQm/q3QXu2BYIcI08=
 github.com/aws/aws-sdk-go-v2/service/sts v1.16.7/go.mod h1:lVxTdiiSHY3jb1aeg+BBFtDzZGSUCv6qaNOyEGCJ1AY=
+github.com/aws/constructs-go/constructs/v10 v10.1.33 h1:oSKj8idTw3abnodW9Q9LTrh5kZcyXucHfUNVixZuhSo=
+github.com/aws/constructs-go/constructs/v10 v10.1.33/go.mod h1:qbIG6z4lreP1aYvcZjAGx6fGTSAZtDdeo5p8XPWbMb0=
+github.com/aws/jsii-runtime-go v1.60.0/go.mod h1:OPeobFzUctDjq8EXbRZbIphpzQg3lzMs8KH09xuHyk0=
+github.com/aws/jsii-runtime-go v1.60.1 h1:b/dh59Rxpqbg3YwkggUSnCRWT1yq7RUOM/2MsleGyXY=
+github.com/aws/jsii-runtime-go v1.60.1/go.mod h1:OPeobFzUctDjq8EXbRZbIphpzQg3lzMs8KH09xuHyk0=
 github.com/aws/smithy-go v1.7.0/go.mod h1:SObp3lf9smib00L/v3U2eAKG8FyQ7iLrJnQiAmR5n+E=
 github.com/aws/smithy-go v1.11.3 h1:DQixirEFM9IaKxX1olZ3ke3nvxRS2xMDteKIDWxozW8=
 github.com/aws/smithy-go v1.11.3/go.mod h1:Tg+OJXh4MB2R/uN61Ko2f6hTZwB/ZYGOtib8J3gBHzA=

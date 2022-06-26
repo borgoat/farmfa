@@ -31,7 +31,7 @@ type dynamoEncryptedString struct {
 
 type dynamoEncryptedBytes struct {
 	dynamoItem
-	EncryptedValue []byte `dynamodbav:"value"`
+	EncryptedValue []byte
 }
 
 type DDBGetItemApi interface {

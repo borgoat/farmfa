@@ -125,3 +125,7 @@ modules.xml
 # End of https://www.gitignore.io/api/go,intellij+all,visualstudiocode
 
 dist/
+
+# CDK asset staging directory
+.cdk.staging
+cdk.out

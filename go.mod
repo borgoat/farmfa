@@ -4,6 +4,10 @@ go 1.14
 
 require (
 	filippo.io/age v1.0.0
+	github.com/aws/aws-cdk-go/awscdk/v2 v2.29.1
+	github.com/aws/aws-cdk-go/awscdkapigatewayv2alpha/v2 v2.29.1-alpha.0 // indirect
+	github.com/aws/aws-cdk-go/awscdkapigatewayv2integrationsalpha/v2 v2.29.1-alpha.0 // indirect
+	github.com/aws/aws-cdk-go/awscdklambdagoalpha/v2 v2.29.1-alpha.0
 	github.com/aws/aws-lambda-go v1.32.0
 	github.com/aws/aws-sdk-go v1.37.19
 	github.com/aws/aws-sdk-go-v2 v1.16.5
@@ -11,6 +15,8 @@ require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.12.6
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.9.4
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.15.7
+	github.com/aws/constructs-go/constructs/v10 v10.1.33
+	github.com/aws/jsii-runtime-go v1.60.1
 	github.com/awslabs/aws-lambda-go-api-proxy v0.13.3
 	github.com/boombuler/barcode v1.0.1 // indirect
 	github.com/deepmap/oapi-codegen v1.11.0
