@@ -4,13 +4,20 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	ddb "github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/aws/aws-sdk-go/aws"
 	"golang.org/x/crypto/blake2b"
 
 	"github.com/borgoat/farmfa/api"
+)
+
+var (
+	exprKeyPk = expression.Key("PK")
+	exprKeySk = expression.Key("SK")
 )
 
 type dynamoItem struct {
@@ -76,7 +83,7 @@ func NewDynamoDbStore(ctx context.Context, client DDBClient, table string) Store
 	}
 }
 
-func (d *DynamoDbStore) encryptedTocItem(sessionId, encryptedToc string) (map[string]types.AttributeValue, error) {
+func prepareTocRecord(sessionId, encryptedToc string) (map[string]types.AttributeValue, error) {
 	h, err := blake2b.New256(nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create hash function: %w", err)
@@ -97,14 +104,24 @@ func (d *DynamoDbStore) encryptedTocItem(sessionId, encryptedToc string) (map[st
 	return tocItem, nil
 }
 
-func (d *DynamoDbStore) getTablePtr() *string {
+func checkUniquePrimaryKey() (expression.Expression, error) {
+	noPk := expression.Name("PK").AttributeNotExists()
+	noSk := expression.Name("SK").AttributeNotExists()
+	return expression.NewBuilder().WithCondition(noPk.And(noSk)).Build()
+}
+
+func sessionPk(id string) string {
+	return fmt.Sprintf("SESSION#%s", id)
+}
+
+func (d *DynamoDbStore) getTableName() *string {
 	return aws.String(d.table)
 }
 
 func (d *DynamoDbStore) CreateSession(session *api.Session, encryptedTEK []byte, encryptedTocZero string) error {
 	sessionItem, err := attributevalue.MarshalMap(&dynamoSession{
 		dynamoItem{
-			PK:         fmt.Sprintf("SESSION#%s", session.Id),
+			PK:         sessionPk(session.Id),
 			SK:         "SESSION",
 			RecordType: "Session",
 		},
@@ -114,14 +131,14 @@ func (d *DynamoDbStore) CreateSession(session *api.Session, encryptedTEK []byte,
 		return fmt.Errorf("failed to create session object: %w", err)
 	}
 
-	tocZeroItem, err := d.encryptedTocItem(session.Id, encryptedTocZero)
+	tocZeroItem, err := prepareTocRecord(session.Id, encryptedTocZero)
 	if err != nil {
 		return fmt.Errorf("failed to prepare toc zero: %w", err)
 	}
 
 	tekItem, err := attributevalue.MarshalMap(&dynamoEncryptedBytes{
 		dynamoItem{
-			PK:         fmt.Sprintf("SESSION#%s", session.Id),
+			PK:         sessionPk(session.Id),
 			SK:         "TEK",
 			RecordType: "TEK",
 		},
@@ -131,26 +148,31 @@ func (d *DynamoDbStore) CreateSession(session *api.Session, encryptedTEK []byte,
 		return fmt.Errorf("failed to marshal TEK: %w", err)
 	}
 
+	expr, err := checkUniquePrimaryKey()
+	if err != nil {
+		return fmt.Errorf("failed to build condition: %w", err)
+	}
+
 	_, err = d.client.TransactWriteItems(d.ctx, &ddb.TransactWriteItemsInput{
 		TransactItems: []types.TransactWriteItem{
 			{
 				Put: &types.Put{
 					Item:                     sessionItem,
-					TableName:                d.getTablePtr(),
-					ExpressionAttributeNames: map[string]string{"#pk": "PK", "#sk": "SK"},
-					ConditionExpression:      aws.String("attribute_not_exists(#pk) AND attribute_not_exists(#sk)"),
+					TableName:                d.getTableName(),
+					ExpressionAttributeNames: expr.Names(),
+					ConditionExpression:      expr.Condition(),
 				},
 			},
 			{
 				Put: &types.Put{
 					Item:      tocZeroItem,
-					TableName: d.getTablePtr(),
+					TableName: d.getTableName(),
 				},
 			},
 			{
 				Put: &types.Put{
 					Item:      tekItem,
-					TableName: d.getTablePtr(),
+					TableName: d.getTableName(),
 				},
 			},
 		},
@@ -166,10 +188,10 @@ func (d *DynamoDbStore) GetSession(id string) (*api.Session, error) {
 	// TODO Check ttl
 	resp, err := d.client.GetItem(d.ctx, &ddb.GetItemInput{
 		Key: map[string]types.AttributeValue{
-			"PK": &types.AttributeValueMemberS{Value: fmt.Sprintf("SESSION#%s", id)},
+			"PK": &types.AttributeValueMemberS{Value: sessionPk(id)},
 			"SK": &types.AttributeValueMemberS{Value: "SESSION"},
 		},
-		TableName:      d.getTablePtr(),
+		TableName:      d.getTableName(),
 		ConsistentRead: aws.Bool(true),
 	})
 	if err != nil {
@@ -186,16 +208,21 @@ func (d *DynamoDbStore) GetSession(id string) (*api.Session, error) {
 }
 
 func (d *DynamoDbStore) AddEncryptedToc(id string, encryptedToc string) error {
-	encryptedTocItem, err := d.encryptedTocItem(id, encryptedToc)
+	encryptedTocItem, err := prepareTocRecord(id, encryptedToc)
 	if err != nil {
 		return fmt.Errorf("failed to prepare toc: %w", err)
 	}
 
+	expr, err := checkUniquePrimaryKey()
+	if err != nil {
+		return fmt.Errorf("failed to build condition: %w", err)
+	}
+
 	_, err = d.client.PutItem(d.ctx, &ddb.PutItemInput{
 		Item:                     encryptedTocItem,
-		TableName:                d.getTablePtr(),
-		ConditionExpression:      aws.String("attribute_not_exists(#pk) AND attribute_not_exists(#sk)"),
-		ExpressionAttributeNames: map[string]string{"#pk": "PK", "#sk": "SK"},
+		TableName:                d.getTableName(),
+		ConditionExpression:      expr.Condition(),
+		ExpressionAttributeNames: expr.Names(),
 	})
 	if err != nil {
 		return ErrTocAlreadyExists
@@ -205,15 +232,19 @@ func (d *DynamoDbStore) AddEncryptedToc(id string, encryptedToc string) error {
 }
 
 func (d *DynamoDbStore) GetEncryptedTocs(id string) ([]string, error) {
+	pkBySession := expression.KeyEqual(exprKeyPk, expression.Value(sessionPk(id)))
+	skTypeToc := expression.KeyBeginsWith(exprKeySk, "TOC#")
+	expr, err := expression.NewBuilder().WithKeyCondition(expression.KeyAnd(pkBySession, skTypeToc)).Build()
+	if err != nil {
+		return nil, fmt.Errorf("failed to build condition: %w", err)
+	}
+
 	resp, err := d.client.Query(d.ctx, &ddb.QueryInput{
-		TableName:                d.getTablePtr(),
-		KeyConditionExpression:   aws.String("#pk = :pk AND begins_with(#sk, :prefix)"),
-		ConsistentRead:           aws.Bool(true),
-		ExpressionAttributeNames: map[string]string{"#pk": "PK", "#sk": "SK"},
-		ExpressionAttributeValues: map[string]types.AttributeValue{
-			":pk":     &types.AttributeValueMemberS{Value: fmt.Sprintf("SESSION#%s", id)},
-			":prefix": &types.AttributeValueMemberS{Value: "TOC#"},
-		},
+		TableName:                 d.getTableName(),
+		ConsistentRead:            aws.Bool(true),
+		KeyConditionExpression:    expr.KeyCondition(),
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve encrypted tocs: %w", err)
@@ -235,7 +266,7 @@ func (d *DynamoDbStore) GetEncryptedTocs(id string) ([]string, error) {
 
 func (d *DynamoDbStore) GetTEK(id string) ([]byte, error) {
 	resp, err := d.client.GetItem(d.ctx, &ddb.GetItemInput{
-		TableName:      d.getTablePtr(),
+		TableName:      d.getTableName(),
 		ConsistentRead: aws.Bool(true),
 		Key: map[string]types.AttributeValue{
 			"PK": &types.AttributeValueMemberS{Value: fmt.Sprintf("SESSION#%s", id)},
@@ -255,6 +286,6 @@ func (d *DynamoDbStore) GetTEK(id string) ([]byte, error) {
 	return tekItem.EncryptedValue, nil
 }
 
-func (d *DynamoDbStore) GarbageCollect(shouldDelete func(session *api.Session) bool) {
-	panic("implement me")
+func (d *DynamoDbStore) GarbageCollect(func(session *api.Session) bool) {
+	// Probably shouldn't implement considering dynamo has TTL already
 }
