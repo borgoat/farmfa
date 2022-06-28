@@ -269,7 +269,7 @@ func (d *DynamoDbStore) GetTEK(id string) ([]byte, error) {
 		TableName:      d.getTableName(),
 		ConsistentRead: aws.Bool(true),
 		Key: map[string]types.AttributeValue{
-			"PK": &types.AttributeValueMemberS{Value: fmt.Sprintf("SESSION#%s", id)},
+			"PK": &types.AttributeValueMemberS{Value: sessionPk(id)},
 			"SK": &types.AttributeValueMemberS{Value: "TEK"},
 		},
 	})
