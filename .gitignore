@@ -7,6 +7,9 @@ dist/
 .cdk.staging
 cdk.out
 
+# Generated header files
+/libfarmfa.h
+
 # Created by https://www.toptal.com/developers/gitignore/api/go,intellij+all,visualstudiocode,node
 # Edit at https://www.toptal.com/developers/gitignore?templates=go,intellij+all,visualstudiocode,node
 
