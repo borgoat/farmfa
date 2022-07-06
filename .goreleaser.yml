@@ -1,16 +1,20 @@
-# This is an example .goreleaser.yml file with some sane defaults.
-# Make sure to check the documentation at http://goreleaser.com
 before:
   hooks:
     - go mod download
     - go generate ./...
 builds:
-  - env:
+  - id: cli
+    env:
       - CGO_ENABLED=0
     goos:
       - linux
       - windows
       - darwin
+  - id: lib
+    env:
+      - CGO_ENABLED=1
+    flags: -buildmode=c-shared
+    ldflags: -s -w
 archives:
   - replacements:
       darwin: Darwin
