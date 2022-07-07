@@ -13,25 +13,33 @@ builds:
   - id: lib
     env:
       - CGO_ENABLED=1
+      - CC=zig cc
+    goos:
+      - linux
     flags: -buildmode=c-shared
     ldflags: -s -w
     overrides:
       - goos: linux
+        goarch: 386
+        env:
+          - CC=zig cc -target i386-linux
+      - goos: linux
         goarch: amd64
         env:
-          - CC="zig cc -target x86_64-linux"
+          - CC=zig cc -target x86_64-linux
       - goos: linux
         goarch: arm64
         env:
-          - CC="zig cc -target aarch64-linux"
+          - CC=zig cc -target aarch64-linux
       - goos: darwin
         goarch: amd64
+        goamd64: v1
         env:
-          - CC="zig cc -target x86_64-macos"
+          - CC=zig cc -target x86_64-macos
       - goos: darwin
         goarch: arm64
         env:
-          - CC="zig cc -target aarch64-macos"
+          - CC=zig cc -target aarch64-macos
 archives:
   - replacements:
       darwin: Darwin
