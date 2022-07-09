@@ -1,6 +1,7 @@
 package main
 
 /*
+#include <string.h>
 #include <stdint.h> // for uintptr_t
 
 typedef uintptr_t fm_dealer_t;
@@ -92,8 +93,8 @@ func fm_player_create_key(public_key_buffer *C.char, private_key_buffer *C.char)
 		return 1
 	}
 
-	*public_key_buffer = *C.CString(id.Recipient().String())
-	*private_key_buffer = *C.CString(id.String())
+	C.strcpy(public_key_buffer, C.CString(id.Recipient().String()))
+	C.strcpy(private_key_buffer, C.CString(id.String()))
 
 	return 0
 }
