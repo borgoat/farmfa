@@ -25,6 +25,7 @@ builds:
           - CC=zig cc -target i386-linux
       - goos: linux
         goarch: amd64
+        goamd64: v1
         env:
           - CC=zig cc -target x86_64-linux
       - goos: linux
