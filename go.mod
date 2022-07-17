@@ -28,6 +28,7 @@ require (
 	github.com/labstack/echo/v4 v4.7.2
 	github.com/pelletier/go-toml/v2 v2.0.2 // indirect
 	github.com/pquerna/otp v1.3.0
+	github.com/spf13/afero v1.9.0 // indirect
 	github.com/spf13/cobra v1.5.0
 	github.com/spf13/viper v1.12.0
 	github.com/stretchr/testify v1.7.2
@@ -35,5 +36,5 @@ require (
 	github.com/testcontainers/testcontainers-go v0.13.0
 	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d
 	golang.org/x/net v0.0.0-20220708220712-1185a9018129 // indirect
-	golang.org/x/sys v0.0.0-20220712014510-0a85c31ab51e // indirect
+	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8 // indirect
 )
