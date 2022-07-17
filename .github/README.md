@@ -62,51 +62,66 @@ alt="PkgGoDev" /></a></span>
 
 <div class="paragraph">
 
-Multi Factor Authentication is usually implemented by using the TOTP
+Multi Factor Authentication is often implemented by using the TOTP
 standard [\[RFC6238\]](#RFC6238) from OATH.
 
 </div>
 
 <div class="ulist">
 
--   A secret key is shared upon activation and stored by the user
-    (usually in an app such as Authenticator) and by the authentication
-    server.
+-   The authentication server generates a secret key, stores it, and
+    shows it to the user as a QR code or a Base32 string. The user
+    stores it usually in a mobile app, or in a password manager.
 
--   Upon login, the user, after providing the credentials, will input a
-    One-Time Password. This password is generated applying the TOTP
-    algorithm to the secret key and to the current time.
+-   Upon login, the user inputs a One-Time Password. The authenticator
+    app or password manager generates this password by applying the TOTP
+    algorithm to the secret key and the current time.
 
--   The server will generate the same password, and if they match, the
-    user will be able to go through. The secret key is never shared
-    again by the user or the server.
+-   The authentication server performs the same algorithm on the secret
+    key and current time. If the output matches the user’s TOTP - the
+    process is successful.
 
 </div>
 
 <div class="paragraph">
 
 The generated One-Time Password, as the name suggests, may only be used
-once (or more precisely, within a timeframe of around 30 seconds to 90
-seconds, depending on the server implementation).
+once (or more precisely, within a certain timeframe, depending on the
+server implementation).
 
 </div>
 
 <div class="paragraph">
 
 farMFA comes into play in shared environments where access to certain
-accounts should be restricted to very special occasions (for example,
+accounts should be restricted to very special occasions. For example,
 access to the root user of an AWS account, especially the root user of
-the management account of an AWS Organization). In this context, we can
-secure the access in such a way that, after the credentials to the
-account are retrieved, the second level of authorisation must come from
-multiple individuals. First of all, we apply *Shamir’s Secret Sharing*
-scheme [\[2\]](#2) to the original TOTP secret key, so that at least 3
-of 5 holders are needed to reconstruct it. Additionally, the TOTP secret
-key is only ever reconstructed in farMFA’s server memory, meaning no
-single player has ever to risk accessing and accidentally
-leaking/persisting it. After having reconstructed the secret, farMFA
-will then generate one or more OTPs for the dealer, until the session
-expires.
+the management account of an AWS Organization, which should only happen
+in break-glass scenarios.
+
+</div>
+
+<div class="paragraph">
+
+In this context, we want to restrict access in such a way that multiple
+individuals are needed to grant authorisation.
+
+</div>
+
+<div class="paragraph">
+
+First of all, we apply the *Shamir’s Secret Sharing* scheme [\[2\]](#2)
+to the original TOTP secret key. This means, for instance, that at least
+3 of 5 holders must put together their shares to reconstruct the secret.
+
+</div>
+
+<div class="paragraph">
+
+Additionally, farMFA implements a workflow to reassemble the TOTP secret
+in a server, and letting users only access the generated TOTP code. This
+way, no single player has to risk accessing and accidentally
+leaking/persisting the secret.
 
 </div>
 
@@ -122,12 +137,17 @@ expires.
 
 <div class="paragraph">
 
-farMFA is a client-server application. Some operations are stateless
-(the creation of the shares) and may even be executed client-side, while
-managing authentication sessions (joining shares, generating TOTP)
-relies on the server memory. When using an optional persistence layer,
-all data is encrypted at rest, and may only be decrypted once the
-applicant provides a decryption key.
+The two main workflows are:
+
+</div>
+
+<div class="ulist">
+
+-   getting the TOTP [secret](#secret), splitting it, and sharing it to
+    multiple parties ([players](#player)) - this is done locally.
+
+-   putting together the [Tocs](#Toc) and generating the TOTP - done by
+    the [server](#server)/[oracle](#oracle).
 
 </div>
 
@@ -137,14 +157,15 @@ applicant provides a decryption key.
 
 <div class="paragraph">
 
-To split a TOTP secret and generate [Tocs](#Toc), you need the Age
-public keys of players.
+During this phase, farMFA MUST encrypt [Tocs](#Toc) based on the
+intended recipient/[player](#player). The current encryption strategy is
+based on [age](https://filippo.io/age).
 
 </div>
 
 <div class="paragraph">
 
-You can generate Age keys via
+Each player generates their age keypair via
 [age-keygen](https://github.com/FiloSottile/age#readme):
 
 </div>
@@ -163,15 +184,15 @@ $ age-keygen -o your_own_key.txt
 
 <div class="paragraph">
 
-All [players](#player) run the same command, and share their public key
-with the [dealer](#dealer).
+Players then share their public key with the [dealer](#dealer).
 
 </div>
 
 <div class="paragraph">
 
-Now the dealer may start the process. Usually, they also provide their
-own public key and keep one Toc.
+Now the dealer may start the process. Usually, the dealer is also a
+player, so they also provide their own age public key and keep one Toc
+for themselves.
 
 </div>
 
@@ -193,14 +214,14 @@ $ farmfa dealer \
 
 <div class="paragraph">
 
-This command will return encrypted Tocs, 1 per player.
+This will yield encrypted Tocs, 1 per player.
 
 </div>
 
 <div class="paragraph">
 
-Assuming the dealer is also player \#1, they can now decrypt their own
-Toc to verify its content.
+Each player now receives their Toc. They can decrypt it and inspect it
+via the age CLI.
 
 </div>
 
@@ -226,6 +247,12 @@ $ age -i your_own_key.txt --decrypt
 
 </div>
 
+<div class="paragraph">
+
+Players must now store their Toc securely.
+
+</div>
+
 </div>
 
 <div class="sect2">
@@ -234,8 +261,8 @@ $ age -i your_own_key.txt --decrypt
 
 <div class="paragraph">
 
-When a user wants to log in they can start a [session](#session). We’ll
-now refer to them as [applicant](#applicant).
+When a user wants to log in they can start a [session](#session). The
+user who wants to log in is called [applicant](#applicant).
 
 </div>
 
@@ -270,17 +297,35 @@ $ http --body POST localhost:8080/sessions toc_zero:='{"group_id":"J7UHQPZK","gr
 
 <div class="paragraph">
 
-The applicant now shares the *Toc Encryption Key (TEK)* with team
-members who hold other [Tocs](#Toc) of the same group. Those team
-members who want to authorise the applicant will become the session’s
-[constituents](#constituent).
+The [oracle](#oracle) returns:
+
+</div>
+
+<div class="ulist">
+
+-   a session ID.
+
+-   a *Toc Encryption Key (TEK)* - a public key to encrypt individual
+    Tocs, so that only the server may use them.
+
+-   a *Key Encryption Key (KEK)* - to decrypt the private part of the
+    TEK, so that the server can only decrypt the Tocs when the applicant
+    requests it.
 
 </div>
 
 <div class="paragraph">
 
-Constituents must encrypt and armor their Toc with TEK (using
-[Age](https://age-encryption.org/)).
+The applicant shares the *TEK* and session ID with team members who hold
+the other [Tocs](#Toc). Those team members who can authorise the
+applicant will be named the session’s [constituents](#constituent).
+
+</div>
+
+<div class="paragraph">
+
+Constituents must encrypt and armor their Toc with TEK (once again,
+using age).
 
 </div>
 
@@ -304,8 +349,8 @@ $ export ENCTOC=$(echo '{"group_id":"J7UHQPZK","group_size":5,"group_threshold":
 
 <div class="paragraph">
 
-Constituents now share the encrypted Toc with the [oracle](#oracle), and
-associate it with the existing session.
+Constituents upload the encrypted Toc to the [oracle](#oracle),
+associating it with the existing session.
 
 </div>
 
@@ -330,10 +375,9 @@ HTTP/1.1 200 OK
 
 <div class="paragraph">
 
-Once enough Tocs have been provided to the oracle, the applicant may now
-query the oracle. The applicant must provide the session’s KEK to
-authorise the oracle to decrypt the Tocs, and generate the
-[TOTP](#TOTP).
+Once the oracle has enough Tocs, the applicant may query the oracle. The
+applicant must provide the *KEK* to let the oracle decrypt the Tocs, and
+generate the [TOTP](#TOTP).
 
 </div>
 
@@ -452,7 +496,7 @@ Used by many applications as a second authentication factor.
 
 <div id="footer-text">
 
-Last updated 2022-06-26 17:01:50 +0200
+Last updated 2022-07-17 15:43:36 +0200
 
 </div>
 
