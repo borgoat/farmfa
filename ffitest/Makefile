@@ -1,5 +1,5 @@
 .PHONY: all
-all: clean build
+all: clean build test
 
 .PHONY: test
 test: lib_test
