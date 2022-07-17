@@ -496,7 +496,7 @@ Used by many applications as a second authentication factor.
 
 <div id="footer-text">
 
-Last updated 2022-07-17 15:43:36 +0200
+Last updated 2022-07-17 16:01:53 +0200
 
 </div>
 
