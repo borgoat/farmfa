@@ -11,7 +11,7 @@ int test_player() {
     if (ret != 0) return ret;
 
     printf("public key:\t%s\nprivate key:\t%s\n\n", keypair.public_key, keypair.private_key);
-    fm_keypair_free(&keypair);
+    fm_player_keypair_free(&keypair);
 
     return 0;
 }

@@ -138,8 +138,8 @@ func fm_player_create_key(keypair *C.fm_keypair) int32 {
 	return 0
 }
 
-//export fm_keypair_free
-func fm_keypair_free(keypair *C.fm_keypair) int32 {
+//export fm_player_keypair_free
+func fm_player_keypair_free(keypair *C.fm_keypair) int32 {
 	C.free(unsafe.Pointer(keypair.public_key))
 	C.free(unsafe.Pointer(keypair.private_key))
 	return 0
