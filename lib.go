@@ -1,10 +1,27 @@
 package main
 
 /*
-#include <string.h>
 #include <stdint.h> // for uintptr_t
+#include <stdlib.h>
+#include <string.h>
 
 typedef uintptr_t fm_dealer_t;
+
+typedef struct fm_keypair {
+	char *public_key;
+	char *private_key;
+} fm_keypair;
+
+typedef struct fm_encrypted_toc {
+	char *recipient;
+	char *encrypted_toc;
+} fm_encrypted_toc;
+
+typedef struct fm_encrypted_tocs {
+	fm_encrypted_toc *items;
+	size_t length;
+} fm_encrypted_tocs;
+
 */
 import "C"
 
@@ -12,17 +29,21 @@ import (
 	"filippo.io/age"
 	"github.com/borgoat/farmfa/deal"
 	"runtime/cgo"
+	"unsafe"
 )
 
 type dealerCtx struct {
 	players []*deal.Player
 	secret  string
 	note    string
+	tocs    map[string]string
+	tocsIdx int32
 }
 
 //export fm_dealer_init
-func fm_dealer_init() C.fm_dealer_t {
-	return C.uintptr_t(cgo.NewHandle(&dealerCtx{}))
+func fm_dealer_init(handle *C.fm_dealer_t) int32 {
+	*handle = C.fm_dealer_t(cgo.NewHandle(&dealerCtx{}))
+	return 0
 }
 
 //export fm_dealer_free
@@ -71,13 +92,29 @@ func fm_dealer_set_note(handle C.fm_dealer_t, note *C.char) int32 {
 }
 
 //export fm_dealer_create_tocs
-func fm_dealer_create_tocs(handle C.fm_dealer_t) int32 {
+func fm_dealer_create_tocs(handle C.fm_dealer_t, encrypted_tocs *C.fm_encrypted_tocs) int32 {
 	ctx := dealerContextFromHandle(handle)
 
-	_, err := deal.CreateTocs("", ctx.secret, ctx.players, 3)
+	tocs, err := deal.CreateTocs(ctx.note, ctx.secret, ctx.players, 3)
 	if err != nil {
 		return 1
 	}
+
+	(*encrypted_tocs).length = C.size_t(len(tocs))
+	(*encrypted_tocs).items = (*C.fm_encrypted_toc)(C.calloc(C.size_t(len(tocs)), C.size_t(unsafe.Sizeof(C.fm_encrypted_toc{}))))
+
+	var tocsSlice = make([]C.fm_encrypted_toc, len(tocs))
+
+	i := 0
+	for r, t := range tocs {
+		tocsSlice[i] = C.fm_encrypted_toc{
+			recipient:     C.CString(r),
+			encrypted_toc: C.CString(t),
+		}
+		i++
+	}
+
+	C.memcpy(unsafe.Pointer((*encrypted_tocs).items), unsafe.Pointer(&tocsSlice[0]), C.size_t(uintptr(len(tocsSlice))*unsafe.Sizeof(C.fm_encrypted_toc{})))
 
 	return 0
 }
@@ -87,14 +124,23 @@ func dealerContextFromHandle(handle C.fm_dealer_t) *dealerCtx {
 }
 
 //export fm_player_create_key
-func fm_player_create_key(public_key_buffer *C.char, private_key_buffer *C.char) int32 {
+func fm_player_create_key(keypair *C.fm_keypair) int32 {
 	id, err := age.GenerateX25519Identity()
 	if err != nil {
 		return 1
 	}
 
-	C.strcpy(public_key_buffer, C.CString(id.Recipient().String()))
-	C.strcpy(private_key_buffer, C.CString(id.String()))
+	*keypair = C.fm_keypair{
+		public_key:  C.CString(id.Recipient().String()),
+		private_key: C.CString(id.String()),
+	}
 
+	return 0
+}
+
+//export fm_keypair_free
+func fm_keypair_free(keypair *C.fm_keypair) int32 {
+	C.free(unsafe.Pointer(keypair.public_key))
+	C.free(unsafe.Pointer(keypair.private_key))
 	return 0
 }

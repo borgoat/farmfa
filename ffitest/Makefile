@@ -3,7 +3,6 @@ all: clean build
 
 .PHONY: test
 test: lib_test
-	@echo ${GODEBUG}
 	@./lib_test
 
 .PHONY: build
