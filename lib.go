@@ -6,6 +6,7 @@ package main
 #include <string.h>
 
 typedef uintptr_t fm_dealer_t;
+typedef uintptr_t fm_player_t;
 
 typedef struct fm_keypair {
 	char *public_key;
@@ -27,8 +28,12 @@ import "C"
 
 import (
 	"filippo.io/age"
+	"filippo.io/age/armor"
 	"github.com/borgoat/farmfa/deal"
+	"github.com/hashicorp/go-multierror"
+	"io"
 	"runtime/cgo"
+	"strings"
 	"unsafe"
 )
 
@@ -38,6 +43,11 @@ type dealerCtx struct {
 	note    string
 	tocs    map[string]string
 	tocsIdx int32
+	err     error
+}
+
+func dealerContextFromHandle(handle C.fm_dealer_t) *dealerCtx {
+	return cgo.Handle(handle).Value().(*dealerCtx)
 }
 
 //export fm_dealer_init
@@ -59,10 +69,12 @@ func fm_dealer_add_player(handle C.fm_dealer_t, recipient, key *C.char) int32 {
 
 	ageRecipient, err := age.ParseX25519Recipient(k)
 	if err != nil {
+		ctx.err = multierror.Append(ctx.err, err)
 		return 1
 	}
 	player, err := deal.NewPlayer(r, deal.EncryptWithAge(ageRecipient))
 	if err != nil {
+		ctx.err = multierror.Append(ctx.err, err)
 		return 2
 	}
 
@@ -97,6 +109,7 @@ func fm_dealer_create_tocs(handle C.fm_dealer_t, encrypted_tocs *C.fm_encrypted_
 
 	tocs, err := deal.CreateTocs(ctx.note, ctx.secret, ctx.players, 3)
 	if err != nil {
+		ctx.err = multierror.Append(ctx.err, err)
 		return 1
 	}
 
@@ -119,8 +132,11 @@ func fm_dealer_create_tocs(handle C.fm_dealer_t, encrypted_tocs *C.fm_encrypted_
 	return 0
 }
 
-func dealerContextFromHandle(handle C.fm_dealer_t) *dealerCtx {
-	return cgo.Handle(handle).Value().(*dealerCtx)
+//export fm_dealer_get_errors
+func fm_dealer_get_errors(handle C.fm_dealer_t, errors **C.char) {
+	ctx := dealerContextFromHandle(handle)
+
+	*errors = C.CString(ctx.err.Error())
 }
 
 //export fm_player_create_key
@@ -142,5 +158,58 @@ func fm_player_create_key(keypair *C.fm_keypair) int32 {
 func fm_player_keypair_free(keypair *C.fm_keypair) int32 {
 	C.free(unsafe.Pointer(keypair.public_key))
 	C.free(unsafe.Pointer(keypair.private_key))
+	return 0
+}
+
+type playerCtx struct {
+	identities []age.Identity
+}
+
+func playerContextFromHandle(handle C.fm_player_t) *playerCtx {
+	return cgo.Handle(handle).Value().(*playerCtx)
+}
+
+//export fm_player_init
+func fm_player_init(handle *C.fm_player_t) int32 {
+	*handle = C.fm_player_t(cgo.NewHandle(&playerCtx{}))
+	return 0
+}
+
+//export fm_player_free
+func fm_player_free(handle C.fm_player_t) {
+	cgo.Handle(handle).Delete()
+}
+
+//export fm_player_load_identity
+func fm_player_load_identity(handle C.fm_player_t, private_key *C.char) int32 {
+	ctx := playerContextFromHandle(handle)
+
+	id, err := age.ParseX25519Identity(C.GoString(private_key))
+	if err != nil {
+		return 1
+	}
+
+	ctx.identities = append(ctx.identities, id)
+	return 0
+}
+
+//export fm_player_decrypt
+func fm_player_decrypt(handle C.fm_player_t, armored *C.char, decrypted **C.char) int32 {
+	ctx := playerContextFromHandle(handle)
+
+	s := C.GoString(armored)
+	r := armor.NewReader(strings.NewReader(s))
+	o, err := age.Decrypt(r, ctx.identities...)
+	if err != nil {
+		return 1
+	}
+
+	buf := new(strings.Builder)
+	_, err = io.Copy(buf, o)
+	if err != nil {
+		return 2
+	}
+
+	*decrypted = C.CString(buf.String())
 	return 0
 }

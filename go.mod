@@ -24,6 +24,7 @@ require (
 	github.com/deepmap/oapi-codegen v1.11.0
 	github.com/getkin/kin-openapi v0.97.0
 	github.com/go-ldap/ldap v3.0.2+incompatible // indirect
+	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/vault v1.11.1
 	github.com/invopop/yaml v0.2.0 // indirect
 	github.com/labstack/echo/v4 v4.7.2
