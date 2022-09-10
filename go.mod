@@ -4,7 +4,6 @@ go 1.14
 
 require (
 	filippo.io/age v1.0.0
-	github.com/aws/aws-cdk-go/awscdk v1.161.0-devpreview
 	github.com/aws/aws-cdk-go/awscdk/v2 v2.29.1
 	github.com/aws/aws-cdk-go/awscdkapigatewayv2alpha/v2 v2.29.1-alpha.0
 	github.com/aws/aws-cdk-go/awscdkapigatewayv2integrationsalpha/v2 v2.29.1-alpha.0
@@ -17,13 +16,11 @@ require (
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression v1.4.12
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.15.9
 	github.com/aws/constructs-go/constructs/v10 v10.1.33
-	github.com/aws/constructs-go/constructs/v3 v3.4.32
 	github.com/aws/jsii-runtime-go v1.60.1
 	github.com/awslabs/aws-lambda-go-api-proxy v0.13.3
 	github.com/boombuler/barcode v1.0.1 // indirect
 	github.com/deepmap/oapi-codegen v1.11.0
 	github.com/getkin/kin-openapi v0.97.0
-	github.com/go-ldap/ldap v3.0.2+incompatible // indirect
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/vault v1.11.1
 	github.com/invopop/yaml v0.2.0 // indirect
@@ -40,5 +37,4 @@ require (
 	golang.org/x/net v0.0.0-20220722155237-a158d28d115b // indirect
 	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f // indirect
 	golang.org/x/time v0.0.0-20220722155302-e5dcc9cfc0b9 // indirect
-	gopkg.in/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d // indirect
 )
