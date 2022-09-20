@@ -10,37 +10,30 @@ builds:
       - linux
       - windows
       - darwin
-#  - id: lib
-#    env:
-#      - CGO_ENABLED=1
-#      - CC=zig cc
-#    goos:
-#      - linux
-#    flags: -buildmode=c-shared
-#    ldflags: -s -w
-#    overrides:
-#      - goos: linux
-#        goarch: 386
-#        env:
-#          - CC=zig cc -target i386-linux
-#      - goos: linux
-#        goarch: amd64
-#        goamd64: v1
-#        env:
-#          - CC=zig cc -target x86_64-linux
-#      - goos: linux
-#        goarch: arm64
-#        env:
-#          - CC=zig cc -target aarch64-linux
-#      - goos: darwin
-#        goarch: amd64
-#        goamd64: v1
-#        env:
-#          - CC=zig cc -target x86_64-macos
-#      - goos: darwin
-#        goarch: arm64
-#        env:
-#          - CC=zig cc -target aarch64-macos
+  - id: libfarmfa
+    dir: libfarmfa
+    binary: libfarmfa.so
+    env:
+      - CGO_ENABLED=1
+    goos:
+      - android
+    goarch:
+      - arm
+      - arm64
+    goarm:
+      - 7
+    flags: -buildmode=c-shared
+    ldflags: -s -w
+    overrides:
+      - goos: android
+        goarch: arm
+        goarm: 7
+        env:
+          - CC=armv7a-linux-androideabi33-clang
+      - goos: android
+        goarch: arm64
+        env:
+          - CC=aarch64-linux-android33-clang
 archives:
   - replacements:
       darwin: Darwin

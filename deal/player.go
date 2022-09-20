@@ -2,11 +2,12 @@ package deal
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 
-	"encoding/json"
 	"filippo.io/age"
 	"filippo.io/age/armor"
+
 	"github.com/borgoat/farmfa/api"
 )
 

@@ -17,6 +17,11 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
 
+      - name: Setup Android NDK
+        uses: nttld/setup-ndk@v1.0.6
+        with:
+          ndk-version: r25b
+
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v2
         with:
