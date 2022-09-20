@@ -18,9 +18,13 @@ jobs:
         uses: actions/setup-go@v2
 
       - name: Setup Android NDK
+        id: setup-ndk
         uses: nttld/setup-ndk@v1.0.6
         with:
           ndk-version: r25b
+
+      - name: Add NDK toolchain path to system
+        run: echo "${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin" >> $GITHUB_PATH
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v2
