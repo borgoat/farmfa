@@ -99,11 +99,11 @@ paths:
 
   /sessions/{id}/totp:
     post:
-      summary: Close the session and generate the TOTP
-      operationId: generateTotp
       tags:
         - core
         - session
+      summary: Close the session and generate the TOTP
+      operationId: generateTotp
       parameters:
         - name: id
           in: path
