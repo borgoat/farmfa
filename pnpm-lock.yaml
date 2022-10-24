@@ -1,7 +1,7 @@
 lockfileVersion: 5.4
 
 specifiers:
-  aws-cdk: ^2.29.1
+  aws-cdk: 2.47.0
 
 dependencies:
   aws-cdk: 2.47.0
