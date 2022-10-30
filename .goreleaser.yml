@@ -12,11 +12,12 @@ builds:
       - darwin
   - id: libfarmfa
     dir: libfarmfa
-    binary: libfarmfa.so
+    binary: libfarmfa
     env:
       - CGO_ENABLED=1
     goos:
-      - android
+      - darwin
+#      - android
     goarch:
       - arm
       - arm64
@@ -35,7 +36,21 @@ builds:
         env:
           - CC=aarch64-linux-android33-clang
 archives:
-  - replacements:
+  - id: cli
+    builds:
+      - cli
+    name_template: "{{ .ProjectName }}_cli_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}"
+    replacements:
+      darwin: Darwin
+      linux: Linux
+      windows: Windows
+      386: i386
+      amd64: x86_64
+  - id: lib
+    builds:
+      - libfarmfa
+    name_template: "{{ .ProjectName }}_libfarmfa_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}"
+    replacements:
       darwin: Darwin
       linux: Linux
       windows: Windows

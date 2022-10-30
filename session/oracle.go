@@ -42,7 +42,13 @@ func (o *Oracle) CreateSession(tocZero *api.Toc) (*api.SessionCredentials, error
 		TocsThreshold: tocZero.GroupThreshold,
 		TocsProvided:  1,
 	}
-	resp.Session = *session
+	resp.Id = session.Id
+	resp.CreatedAt = session.CreatedAt
+	resp.Complete = session.Complete
+	resp.TocGroupId = session.TocGroupId
+	resp.TocsInGroup = session.TocsInGroup
+	resp.TocsThreshold = session.TocsThreshold
+	resp.TocsProvided = session.TocsProvided
 
 	// A TEK is generated and used to encrypt Toc zero
 	tek, err := age.GenerateX25519Identity()
