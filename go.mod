@@ -22,6 +22,7 @@ require (
 	github.com/aws/jsii-runtime-go v1.60.1
 	github.com/awslabs/aws-lambda-go-api-proxy v0.13.3
 	github.com/boombuler/barcode v1.0.1 // indirect
+	github.com/containerd/containerd v1.5.13 // indirect
 	github.com/cyberdelia/templates v0.0.0-20141128023046-ca7fffd4298c // indirect
 	github.com/deepmap/oapi-codegen v1.12.2
 	github.com/fsnotify/fsnotify v1.6.0 // indirect

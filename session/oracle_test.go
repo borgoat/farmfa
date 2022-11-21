@@ -135,7 +135,9 @@ func genericOracleGenerateTOTP(t *testing.T, store session.Store) {
 	err = m.AddToc(creds.Id, out.String())
 	assert.NoError(t, err)
 
-	totp, err := m.GenerateTOTP(creds.Id, &creds.SessionKeyEncryptionKey)
+	key := &api.SessionKeyEncryptionKey{Kek: creds.Kek}
+
+	totp, err := m.GenerateTOTP(creds.Id, key)
 	assert.NoError(t, err)
 	assert.Regexp(t, regexp.MustCompile(`^\d{6}$`), totp)
 }
