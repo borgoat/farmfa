@@ -17,13 +17,13 @@ builds:
       - CGO_ENABLED=1
     goos:
       - darwin
-#      - android
+      - android
     goarch:
       - arm
       - arm64
     goarm:
       - 7
-    flags: -buildmode=c-shared
+    buildmode: c-shared
     ldflags: -s -w
     overrides:
       - goos: android
