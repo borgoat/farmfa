@@ -1,0 +1,9 @@
+package: api
+generate:
+  models: true
+  embedded-spec: true
+  echo-server: true
+  client: true
+output: api/farmfa.gen.go
+output-options:
+  skip-prune: true
